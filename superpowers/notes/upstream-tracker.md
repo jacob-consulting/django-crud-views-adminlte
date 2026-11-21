@@ -21,7 +21,7 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 Every entry was re-checked against django-crud-views `75a42851` (the nox `PIN`; still `origin/main`) and
 adminlte-django 0.3.3, in the full nox matrix (Python 3.12-3.15 x Django 6.0/6.1, package, docs: 18/18 sessions green;
 the Python 3.15 cells are logged as unsupported, A5) and in the browser (alex, sam, kim; light, dark and auto; sidebar
-expanded and mini; 375px). Nothing is filed or done upstream from this tracker yet; C8 is covered by django-crud-views #393 (CoreUI U10), open.
+expanded and mini; 375px). Filed upstream from this tracker: C10 as django-crud-views #399 and C11 as #400 (both 2026-11-21, open); nothing is done yet. C8 is covered by django-crud-views #393 (CoreUI U10), open.
 
 Pending pin bumps (the upstream PRs are still open; follow "Pin bump procedure" in `superpowers/plans/2026-11-21-adminlte-theme.md` for each when it merges):
 
@@ -45,8 +45,8 @@ Pending pin bumps (the upstream PRs are still open; follow "Pin bump procedure" 
 | C7 | confirmed | none; pinned by `MenuPerRoleTests` in `example/config/test_pages.py` |
 | C8 | covered by #393 (CoreUI U10), open | none; `xfail(strict=True)` in `tests/crud_views_adminlte/test_tables.py` |
 | C9 | confirmed | `.table-container` rule in `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css` |
-| C10 | confirmed | none (upstream documents it as deliberate) |
-| C11 | confirmed | none (upstream documents it as deliberate) |
+| C10 | filed (#399), open | none (upstream documents it as deliberate; #399 amends that decision) |
+| C11 | filed (#400), open | none (upstream documents it as deliberate; #400 amends that decision) |
 | A1 | anticipated, not hit | nothing; the sidebar is fed through `ADMINLTE["menu"]`, no partial is overridden |
 | A2 | confirmed | `ViewSetHrefFilter` / `ViewSetGateFilter` (`menu.py`), check `crud_views_adminlte.E013` |
 | A3 | confirmed (demo) | `ADMINLTE` in `example/config/settings.py` and the test settings |
@@ -256,7 +256,7 @@ Open items from the browser pass that are not entries here (third party or demo-
 
 ## C10. The bulk toolbar shows every action to every viewer
 
-- Status: confirmed · Severity: annoyance
+- Status: filed (#399) · Severity: annoyance
 - Symptom: the bulk toolbar renders every action in `cv_bulk_actions` whatever the viewer may do; permission is only
   checked when the form is submitted. In the demo, Kim (Roasters: `roast_order`, no `change_order`) sees
   "Cancel orders" on `/orders/`, and submitting it answers 403. Upstream documents this as deliberate
@@ -266,14 +266,16 @@ Open items from the browser pass that are not entries here (third party or demo-
   "bulk_cancel")`); log in as `kim`, open `/orders/`, select an order, press "Cancel orders": 403
   (`test_roasters_may_not_cancel` in `example/sales/tests/test_bulk.py`).
 - Workaround: none.
-- Proposed upstream fix: filter the toolbar's actions by each destination's model-level permission
-  (`cv_has_access(user)` without object, one check per action, no per-row queries), or an opt-in
-  `cv_bulk_actions_filter_by_permission`; a toolbar with no action left renders no checkboxes.
+- Proposed upstream fix: #399 (filed 2026-11-21, amends #387 D-03): the toolbar offers an action only when its
+  destination passes `cv_has_access(user)` and then `cv_action_enabled` for the viewer, by default and without a
+  flag; one check per action, nothing per row, no Guardian object check while rendering; a source with no action
+  left renders no toolbar and no checkboxes. The opt-in flag proposed here first was not selected.
+- When it lands: Kim no longer sees "Cancel orders"; `test_roasters_may_not_cancel` (direct POST, 403) keeps passing.
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
 ## C11. No danger variant for destructive bulk actions
 
-- Status: confirmed · Severity: cosmetic
+- Status: filed (#400) · Severity: cosmetic
 - Symptom: every bulk toolbar button is a form submit styled by `form:submit`, so a destructive action ("Cancel
   orders", upstream's own bulk Delete) looks the same as a harmless one ("Mark roasted"); both are the primary button.
   Single-record actions have variants (`list:danger`, `context:danger`), bulk actions have none. Upstream documents
@@ -281,8 +283,12 @@ Open items from the browser pass that are not entries here (third party or demo-
   `:421`: "There is no per-action map and no variant.").
 - Minimal repro: the demo's `/orders/` toolbar: "Mark roasted" and "Cancel orders" are both `btn btn-primary`.
 - Workaround: none.
-- Proposed upstream fix: honour the destination's `cv_action_variant` in the toolbar with per-variant class keys
-  (`bulk:primary`, `bulk:danger`, ... as for `list:*` / `context:*`), or a per-action class key.
+- Proposed upstream fix: #400 (filed 2026-11-21, amends phase 06.41 D-19 / D-29): a dedicated bulk leaf
+  (`crud_views/tags/button/bulk.html`) with four class keys `bulk:primary` to `bulk:danger`, selected by the
+  destination's `cv_action_variant` (default `secondary`; stock values all `btn btn-primary`, so stock is unchanged).
+  The per-action class key was not selected.
+- When it lands: add the four keys (and `:icon` variants where used) to the theme's button classes and set
+  `cv_action_variant = "danger"` on the demo's "Cancel orders".
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
 ## adminlte-django (A)

@@ -1,0 +1,161 @@
+[project]
+name = "django-crud-views-adminlte"
+version = "0.1.0"
+description = "AdminLTE 4 theme for django-crud-views, built on the adminlte-django page shell"
+authors = [
+    { name = "Alexander Jacob", email = "alexander.jacob@jacob-consulting.de" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Framework :: Django :: 6",
+    "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "django (>=6.0)",
+    # Raised to >=1.0.0rc1 in the release commit (scripts/check_release_floor.py guards the publish workflow).
+    "django-crud-views (>=0.30)",
+    # The page shell (PyPI name adminlte-django, import django_adminlte4; not the unrelated django-adminlte4).
+    "adminlte-django[tables,crispy] (>=0.3.3,<0.4)",
+]
+
+[project.optional-dependencies]
+# The Acme Roasters example project (example/).
+examples = [
+    "django-crud-views[workflow,polymorphic,guardian,ordered]",
+    "django-crud-views-extensions (>=0.3.3)",
+    "pygments",
+]
+
+test = [
+    "nox",
+    "pytest",
+    "pytest-cov",
+    "pytest-random-order",
+    "pytest-mock",
+    "pytest-django",
+    "pytest-xdist",
+    "lxml",
+    "cssselect",
+]
+
+dev = [
+    "ruff>=0.17,<0.18",
+    "pre-commit",
+    "bump-my-version",
+    "mkdocs (>=1.6.1)",
+    "mkdocs-awesome-pages-plugin (>=2.10.1)",
+    "mkdocs-get-deps (>=0.2.0)",
+    "pymdown-extensions (>=10.0)",
+]
+
+[project.urls]
+Homepage = "https://github.com/jacob-consulting/django-crud-views-adminlte"
+Documentation = "https://django-crud-views-adminlte.readthedocs.io/en/latest/"
+Repository = "https://github.com/jacob-consulting/django-crud-views-adminlte.git"
+Issues = "https://github.com/jacob-consulting/django-crud-views-adminlte/issues"
+Changelog = "https://github.com/jacob-consulting/django-crud-views-adminlte/blob/main/CHANGELOG.md"
+
+# Local development tracks the sibling checkouts (unreleased upstream features). nox, CI installs
+# django-crud-views from its GitHub (noxfile.py CRUD_VIEWS, pinned) instead until 1.0.0rc1 is on PyPI.
+[tool.uv.sources]
+django-crud-views = { path = "../../django-crud-views", editable = true }
+django-crud-views-extensions = { path = "../../django-crud-views-extensions", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/crud_views_adminlte"]
+
+# The sdist ships only what is listed here; scripts/check_dist.py enforces this list on every built distribution.
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src",
+    "tests",
+    "docs",
+    "example",
+    "noxfile.py",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+exclude = [
+    "example/db.sqlite3",
+    "example/media",
+    "example/staticfiles",
+    "__pycache__",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.crud_views_adminlte.settings"
+pythonpath = ["."]
+testpaths = ["tests/crud_views_adminlte"]
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+relative_files = true
+source = ["crud_views_adminlte"]
+
+[tool.coverage.paths]
+# nox installs the package rather than linking it; map site-packages back onto src/ for Codecov.
+source = [
+    "src/",
+    "*/site-packages/",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "src/crud_views_adminlte/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "README.md"
+search = "Current version: {current_version}"
+replace = "Current version: {new_version}"
+
+[tool.ruff]
+line-length = 120
+extend-exclude = ["superpowers/**"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM", "RUF"]
+# Typographic characters in demo copy and test data, on purpose.
+allowed-confusables = ["×", "’", "–"]
+
+[tool.ruff.lint.per-file-ignores]
+# ClassVar annotations on test fixtures and demo code add noise, not safety; Django generates migrations.
+"tests/**" = ["RUF012"]
+"example/**" = ["RUF012"]
+"**/migrations/*" = ["RUF012"]

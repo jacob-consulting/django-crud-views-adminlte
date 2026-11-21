@@ -21,9 +21,9 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 Every entry was re-checked against django-crud-views `75a42851` (the nox `PIN`; still `origin/main`) and
 adminlte-django 0.3.3, in the full nox matrix (Python 3.12-3.15 x Django 6.0/6.1, package, docs: 18/18 sessions green;
 the Python 3.15 cells are logged as unsupported, A5) and in the browser (alex, sam, kim; light, dark and auto; sidebar
-expanded and mini; 375px). Nothing is filed or done upstream from this tracker yet; C8 rides on django-crud-views #393.
+expanded and mini; 375px). Nothing is filed or done upstream from this tracker yet; C8 is covered by django-crud-views #393 (CoreUI U10), open.
 
-Pending pin bumps (the upstream PRs are still open; run `pin-bump-procedure.md` for each when it merges):
+Pending pin bumps (the upstream PRs are still open; follow "Pin bump procedure" in `superpowers/plans/2026-11-21-adminlte-theme.md` for each when it merges):
 
 - #391 (data-attribute prefix; Task 7): expected to change nothing here. adminlte-django is Bootstrap 5.3, so the
   `data-bs-*` attributes already work; re-run the suites and the browser smoke test only.
@@ -43,7 +43,7 @@ Pending pin bumps (the upstream PRs are still open; run `pin-bump-procedure.md` 
 | C5 | confirmed | URLconf import in `ViewSetHrefFilter` (`menu.py`) and `check_menu` (`checks.py`) |
 | C6 | confirmed | none; `ViewSetGateFilter` asks `cv_has_access(user)`, anonymous users see no `viewset` entry |
 | C7 | confirmed | none; pinned by `MenuPerRoleTests` in `example/config/test_pages.py` |
-| C8 | filed (#393, open) | none; `xfail(strict=True)` in `tests/crud_views_adminlte/test_tables.py` |
+| C8 | covered by #393 (CoreUI U10), open | none; `xfail(strict=True)` in `tests/crud_views_adminlte/test_tables.py` |
 | C9 | confirmed | `.table-container` rule in `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css` |
 | C10 | confirmed | none (upstream documents it as deliberate) |
 | C11 | confirmed | none (upstream documents it as deliberate) |
@@ -76,11 +76,11 @@ Comparison with the sibling trackers (Tabler: `tabler-test/dev/crud_views_upstre
   host), C3 (a ViewSet's label without a request), C4 (an icon as a CSS class), C5 (ViewSet lookup before the URLconf
   is imported), C6 (a "may open" check covering every access mixin), C7 (Guardian lists in navigation). Tabler and
   CoreUI owned their shells and called crud_views' tags in place, so none of these came up there. Closest
-  relatives: CoreUI U9 (breadcrumb class keys, #393) touches C1 but solves another problem; Tabler 23 / 37 (Guardian
+  relatives: CoreUI U9 (breadcrumb class keys, #393) touches C1 but solves another problem; Tabler 23 (Guardian
   checks in the object navbar) are the in-page side of C6 / C7.
 - New, not shell-related: C10 and C11 (bulk toolbar: actions shown without permission, no danger variant); bulk
   actions were not part of the earlier demos.
-- Repeats: C8 = CoreUI U10 (`aria-sort`, filed together as #393). C9 is the list-table instance of Tabler 5 / 25
+- Repeats: C8 = CoreUI U10 (`aria-sort`, filed together as #393). C9 is related to Tabler 5 / 25
   (workflow history and manage tables without `.table-responsive`, fixed upstream in #319 / #366); CoreUI worked
   around it by overriding the table template, which this theme avoids.
 - Not repeated: CoreUI U1-U5 / U12 (`data-coreui-*`, `--cui-*` vs `--bs-*`) cannot occur on a Bootstrap 5.3 host.
@@ -223,7 +223,7 @@ Open items from the browser pass that are not entries here (third party or demo-
 
 ## C8. The stock table header has no sorted-column state for assistive technology
 
-- Status: filed (#393, open) · Severity: annoyance
+- Status: covered by #393 (CoreUI U10), open · Severity: annoyance
 - Symptom: in `crud_views/table/bootstrap5.html` (block `table.thead`) a sorted `<th>` shows the `table-sort-asc` /
   `table-sort-desc` icon but carries no `aria-sort`, so a screen reader does not learn which column is sorted. The
   icon condition compares `request.GET.sort` with the column name, so a table with a `prefix` (parameter
@@ -347,7 +347,7 @@ Open items from the browser pass that are not entries here (third party or demo-
   this setup.
 - Minimal repro: `uv sync`, then `manage.py check` with `APP_DIRS=True` and no loaders list.
 - Workaround: the full setup in `tests/crud_views_adminlte/settings.py` (loaders order filesystem, app_directories,
-  components; no `cached.Loader` in tests), documented for adopters later.
+  components; no `cached.Loader` in tests), documented for adopters in `docs/installation.md` ("Settings").
 - Proposed upstream fix: ship the components as plain templates, or register the components loader itself so
   `APP_DIRS=True` keeps working.
 - Verified against: adminlte-django 0.3.3, installation.md and `django_adminlte4/checks.py`
@@ -441,8 +441,8 @@ Open items from the browser pass that are not entries here (third party or demo-
   custom filter's keys (the theme's `"viewset"` / `"view"`) gets a warning per entry on every `check` / `runserver`,
   and `manage.py check --fail-level WARNING` fails.
 - Minimal repro: `ADMINLTE = {"menu": [{"viewset": "author", "text": "Authors"}]}`, `manage.py check`.
-- Workaround: `SILENCED_SYSTEM_CHECKS = ["adminlte.W003"]` in `tests/crud_views_adminlte/settings.py` (and the demo,
-  to be documented for adopters); the theme's `crud_views_adminlte.E010`-`E015` check the `viewset` entries, but the
+- Workaround: `SILENCED_SYSTEM_CHECKS = ["adminlte.W003"]` in `tests/crud_views_adminlte/settings.py` (and the demo;
+  documented for adopters in `docs/installation.md`, "Silenced check"); the theme's `crud_views_adminlte.E010`-`E015` check the `viewset` entries, but the
   host's typo detection for its own keys is lost. `test_host_menu_check_rejects_custom_keys` in
   `tests/crud_views_adminlte/test_host_drift.py` fails once the host accepts custom keys.
 - Proposed upstream fix: let a filter declare the keys it consumes (e.g. a `menu_keys` class attribute collected from
@@ -573,7 +573,7 @@ Open items from the browser pass that are not entries here (third party or demo-
 - Minimal repro: `DJANGO_TABLES2_TEMPLATE = "django_tables2/adminlte.html"`; open the demo's `/orders/?sort=customer`:
   no sort icon (seen in the browser, Task 8).
 - Workaround: the theme uses crud_views' `crud_views/table/bootstrap5.html` (test and demo settings), without the
-  host's card; the choice is recorded in `docs/theme_internals.md` ("Tables"). `test_table_in_card` and
+  host's card; the choice is recorded in `docs/theme_internals.md` ("Tables"). `test_table_without_host_card` and
   `test_sorted_column_icon` in `tests/crud_views_adminlte/test_tables.py` pin it.
 - Proposed upstream fix: ship the card frame as a partial (or a template taking the base to extend from a variable,
   e.g. `{% extends adminlte_tables2_base|default:"django_tables2/bootstrap5.html" %}`), so a project can wrap a

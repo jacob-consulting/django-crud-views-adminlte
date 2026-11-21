@@ -159,7 +159,7 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "manage:badge-model": "badge bg-secondary-subtle text-secondary-emphasis",
     "manage:badge-resource": "badge bg-info-subtle text-info-emphasis",
     "manage:badge-objects": "badge border border-secondary-subtle text-body-secondary",
-    "manage:badge-permission": "badge cv-adminlte-badge-blue",
+    "manage:badge-permission": "badge cv-adminlte-badge-blue",  # tracker A6
     "manage:badge-group": "badge cv-manage-badge-group",
     "manage:badge-policy-global": "badge bg-success-subtle text-success-emphasis",
     "manage:badge-policy-strict": "badge bg-success-subtle text-success-emphasis",

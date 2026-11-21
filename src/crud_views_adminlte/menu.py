@@ -81,7 +81,13 @@ def icon_class(value: str | None) -> str | None:
         classes = template.format(name=name)
         if config.get("placement") == "host":
             classes = config.get("standalone", "{name_class}").format(name_class=classes)
-    except (KeyError, IndexError, ValueError, AttributeError):  # bad format string or non-str standalone (E354)
+    except (
+        KeyError,
+        IndexError,
+        ValueError,
+        AttributeError,
+        TypeError,
+    ):  # bad format string or non-str standalone (E354)
         return None
     return classes
 

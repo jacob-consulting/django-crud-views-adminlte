@@ -323,7 +323,7 @@ Run when a tracked upstream change (#391, #393, #394) is merged to crud_views `m
 - [ ] **Step 1: Pin bump to the #393 merge** (procedure). If #393 is not merged when Task 6 is done, skip this step,
   use the host's `django_tables2/adminlte.html` path, write no `table.thead` copy, and log the missing sorted-column
   state as waiting on #393.
-- [ ] **Step 2: Write tests:** `test_table_in_card` (list page table inside the chosen template's wrapper, once — no
+- [ ] **Step 2: Write tests:** `test_table_without_host_card` (list page table inside the chosen template's wrapper, once — no
   card in a card); `test_sorted_column_aria_sort` (sorted column `th[aria-sort="ascending"]`, with and without a table
   prefix; xfail strict when on the fallback path); `test_bulk_toolbar` (bulk-enabled testapp list shows toolbar,
   select-all and per-row checkboxes with the theme's `bulk:*` classes); `test_bulk_form_page_renders`;

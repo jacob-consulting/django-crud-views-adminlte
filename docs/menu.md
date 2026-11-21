@@ -34,7 +34,9 @@ permission check crud_views itself uses for links without an object.
 - For Guardian ViewSets, object-level grants cannot be seen without an object, so a list shows to any user who may
   pass the global check, and opens an empty list for a user without grants (tracker C7). The demo's Customers entry is
   an example.
-- A submenu parent left with no visible child is dropped, unless it links somewhere itself (tracker A10). A menu
+- A submenu parent whose children the ViewSet gate hid (no access to the ViewSet) is dropped, unless it links
+  somewhere itself (tracker A10). A parent emptied by a host `can` check, or whose entries are all misconfigured,
+  stays as a dead `#` link (the host's behaviour). A menu
   `header` stays when everything under it is hidden (tracker A14).
 
 ## Ordering rule

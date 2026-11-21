@@ -204,7 +204,7 @@ def test_menu_built_before_first_url_resolution():
     assert "'href': '/author/'" in result.stdout
 
 
-@pytest.mark.parametrize("template", ["{nope}", "{0}", "{", "{name.nope}"])
+@pytest.mark.parametrize("template", ["{nope}", "{0}", "{", "{name.nope}", "{name[x]}"])
 def test_icon_class_broken_library_gives_no_icon(template):
     from crud_views_adminlte.menu import icon_class
 

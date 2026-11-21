@@ -41,7 +41,7 @@ def test_table_template_setting(settings):
 
 
 @pytest.mark.parametrize("url_name", ["author-list", "bulk_author-list"])
-def test_table_in_card(admin_client, authors, url_name):
+def test_table_without_host_card(admin_client, authors, url_name):
     response = admin_client.get(reverse(url_name))
     assert TABLE_TEMPLATE in [t.name for t in response.templates]
     doc = page(response)
@@ -62,7 +62,7 @@ def test_sorted_column_icon(admin_client, authors):
 
 
 # tracker C8: no table.thead copy on the fallback path; passes (and so fails strictly) once the pin brings #393
-@pytest.mark.xfail(strict=True, reason="waiting on django-crud-views #393")
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason="waiting on django-crud-views #393")
 @pytest.mark.parametrize(
     ("url_name", "param"),
     [("author-list", "sort"), ("bulk_author-list", "a-sort")],

@@ -96,6 +96,29 @@
   box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
 }
 
+/* Active states compiled with the blue (Task 10 browser pass): the active dropdown item (colour-mode switch, row
+   action menus), the active page and the active vertical tab of the object-detail pack. */
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: #a0522d;
+}
+.pagination {
+  --bs-pagination-active-bg: #a0522d;
+  --bs-pagination-active-border-color: #a0522d;
+}
+.nav-pills {
+  --bs-nav-pills-link-active-bg: #a0522d;
+}
+/* the accordion pack (green lots): the focus ring and the open group's chevron (stroke #402112, the primary text
+   emphasis); in dark mode Bootstrap draws both chevrons in its light blue, so they take the body text and the tint */
+.accordion {
+  --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+  --bs-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23402112' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+[data-bs-theme="dark"] .accordion-button::after {
+  --bs-accordion-btn-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  --bs-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23c69781' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
 /* The sidebar's active link and the login card's outline are AdminLTE's own primary. */
 .sidebar-menu .nav-link.active,
 .card-outline.card-primary {
@@ -105,9 +128,13 @@
 .card-outline.card-primary {
   border-top-color: #a0522d;
 }
-.app-sidebar .nav-link.active {
-  background-color: #a0522d;
-  color: #fff;
+/* The sidebar's active link reads AdminLTE's own variables (set on .app-sidebar, and again for the dark sidebar the
+   shell always renders); a rule on the link itself loses to `.sidebar-wrapper .sidebar-menu>.nav-item>.nav-link.active`. */
+.app-sidebar,
+[data-bs-theme="dark"] .app-sidebar,
+[data-bs-theme="dark"].app-sidebar {
+  --lte-sidebar-menu-active-bg: #a0522d;
+  --lte-sidebar-menu-active-color: #fff;
 }
 
 /* "Show code" panel and "How this is themed" (config/showcode.py). The token colours and the background come from

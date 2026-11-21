@@ -29,6 +29,7 @@
         <div class="text-body-secondary">Ordered {{ object.created_at|date:"d M Y" }}{% if object.requested_roast_date %} · roast on {{ object.requested_roast_date|date:"d M Y" }}{% endif %}</div>
       </div>
     </div>
+    <div class="table-responsive">
     <table class="table" data-packing-lines>
       <thead><tr><th class="text-center" style="width: 1%">Packed</th><th class="text-end" style="width: 1%">Qty</th><th>Product</th><th>Grind</th><th>Bag</th></tr></thead>
       <tbody>
@@ -45,6 +46,7 @@
       {% endfor %}
       </tbody>
     </table>
+    </div>
     {% if object.notes %}<p class="text-body-secondary mt-4">Notes: {{ object.notes|linebreaksbr }}</p>{% endif %}
   </div>
 </div>

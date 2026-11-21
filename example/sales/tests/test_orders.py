@@ -488,6 +488,8 @@ class OrderPageTests(OrderTestCase):
         self.assertIn("Test Huila", lines)
         self.assertIn("Test dripper", lines)
         self.assertIn("data-print", html)
+        # at 375px the five columns are wider than the card body (Task 10 browser pass): the table scrolls in place
+        self.assertRegex(html, r'<div class="table-responsive">\s*<table class="table" data-packing-lines>')
 
     def test_duplicate_order(self):
         self.login()

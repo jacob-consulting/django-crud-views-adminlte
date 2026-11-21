@@ -713,6 +713,14 @@ class NavigationTests(TestCase):
         self.assertIn("/shipment/", self.links(menu))
         self.assertNotIn("/lot/", self.links(menu))
 
+    def test_the_users_header_follows_the_users_permission(self):
+        # tracker A14: the host keeps a header whose entries are all hidden; the demo gates the header itself
+        self.assertNotIn("Users", self.headers(self.sidebar(reverse("dashboard:index"))))
+        _grant(self.user, "auth.view_user")
+        menu = self.sidebar(reverse("dashboard:index"))
+        self.assertIn("Users", self.headers(menu))
+        self.assertIn("/users/", self.links(menu))
+
     def test_customers_open_for_account_managers_without_a_global_view(self):
         _grant(self.user, "sales.add_customer")
         self.assertIn("/customer/", self.links(self.sidebar(reverse("dashboard:index"))))
@@ -730,6 +738,13 @@ class FaviconTests(TestCase):
         self.client.logout()
         self.assertContains(self.client.get(reverse("login")), 'href="/static/acme/favicon.svg"')
         self.assertIn("#a0522d", Path(finders.find("acme/favicon.svg")).read_text())
+
+    def test_the_brand_mark_has_an_intrinsic_size(self):
+        # the same file is ADMINLTE["logo_img"]; without width/height the SVG has no intrinsic size and the collapsed
+        # mini sidebar's brand link shrinks it to 0px wide (Task 10 browser pass)
+        root = re.search(r"<svg[^>]*>", Path(finders.find("acme/favicon.svg")).read_text()).group(0)
+        self.assertIn('width="32"', root)
+        self.assertIn('height="32"', root)
 
 
 class ManageViewsTests(TestCase):
@@ -1151,12 +1166,22 @@ class BrandTests(SimpleTestCase):
             ".form-check-input:checked",
             '.form-check-input[type="checkbox"]:indeterminate',  # the bulk toolbar's select-all (Task 8)
             ".nav-link:focus-visible",
-            ".app-sidebar .nav-link.active",
+            # the sidebar's active link is coloured through AdminLTE's own variable: a plain `.app-sidebar
+            # .nav-link.active` rule loses to `.sidebar-wrapper .sidebar-menu>.nav-item>.nav-link.active` (Task 10)
+            '[data-bs-theme="dark"].app-sidebar',
+            # Task 10 browser pass: still blue in both colour modes before these rules
+            ".dropdown-menu",  # the active item: colour-mode switch, row action menus
+            ".pagination",  # the active page
+            ".nav-pills",  # the active vertical tab of the object-detail pack
+            ".accordion",  # the accordion pack: focus ring and the open group's chevron
+            '[data-bs-theme="dark"] .accordion-button::after',  # dark mode draws both chevrons in the light blue
         ):
             with self.subTest(selector=selector):
                 self.assertRegex(css, rf"(?m)^{re.escape(selector)}(,| \{{)")
         self.assertNotIn("13, 110, 253", css)  # Bootstrap's blue
         self.assertNotIn("0d6efd", css.lower())
+        self.assertNotIn("6ea8fe", css.lower())  # its dark-mode tint
+        self.assertIn("--lte-sidebar-menu-active-bg: #a0522d;", css)
 
     def test_focus_ring_follows_the_colour_mode(self):
         css = self.css()

@@ -25,6 +25,8 @@ MENU: list[dict] = [
     {"header": "Developer"},
     {"viewset": "showcaseitem", "text": "Form showcase", "icon": _icon("showcase")},
     {"text": "How this is themed", "route": "theming", "icon": _icon("theming")},
-    {"header": "Users"},
+    # tracker A14: the host keeps a header whose entries are all hidden; this section has one gated entry, so the
+    # header carries the same `can` (the other sections are gated per ViewSet, which a header cannot repeat)
+    {"header": "Users", "can": "auth.view_user"},
     {"text": "Users", "route": "dashboard:users", "icon": _icon("users"), "can": "auth.view_user"},
 ]

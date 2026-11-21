@@ -16,6 +16,84 @@ problem was reproduced), **filed** (issue number), **done** (fixed upstream and 
 
 Severity: **blocker**, **annoyance**, **cosmetic**.
 
+## Close-out (2026-11-21, after the browser pass)
+
+Every entry was re-checked against django-crud-views `75a42851` (the nox `PIN`; still `origin/main`) and
+adminlte-django 0.3.3, in the full nox matrix (Python 3.12-3.15 x Django 6.0/6.1, package, docs: 18/18 sessions green;
+the Python 3.15 cells are logged as unsupported, A5) and in the browser (alex, sam, kim; light, dark and auto; sidebar
+expanded and mini; 375px). Nothing is filed or done upstream from this tracker yet; C8 rides on django-crud-views #393.
+
+Pending pin bumps (the upstream PRs are still open; run `pin-bump-procedure.md` for each when it merges):
+
+- #391 (data-attribute prefix; Task 7): expected to change nothing here. adminlte-django is Bootstrap 5.3, so the
+  `data-bs-*` attributes already work; re-run the suites and the browser smoke test only.
+- #393 (Task 8 re-check): C8 flips. `test_sorted_column_aria_sort` is `xfail(strict=True)` and fails the suite
+  once `aria-sort` and the prefixed sort icon arrive; drop the marker and set C8 to done. Its breadcrumb class keys
+  (`breadcrumb:list` / `:item` / `:item-active`) do not solve C1: they style the wrapper, the theme needs it gone.
+- #394 (`--cv-*` tokens; Task 10 step 1, deferred): re-check the manage and formset pages in dark mode. Both follow
+  the dark mode today (checked in this pass), because AdminLTE defines the `--bs-*` variables upstream's CSS reads;
+  no change expected.
+
+| Entry | Final status | Handled by (theme side) |
+|---|---|---|
+| C1 | confirmed | `src/crud_views_adminlte/templates/crud_views/tags/breadcrumb.html` (items only; drift-tested) |
+| C2 | confirmed | none; `crud_views_adminlte/page.html` leaves the `messages` block to the host |
+| C3 | confirmed | check `crud_views_adminlte.E014` (`src/crud_views_adminlte/checks.py`): a `viewset` entry carries its `text` |
+| C4 | confirmed | `icon_class` in `src/crud_views_adminlte/menu.py` |
+| C5 | confirmed | URLconf import in `ViewSetHrefFilter` (`menu.py`) and `check_menu` (`checks.py`) |
+| C6 | confirmed | none; `ViewSetGateFilter` asks `cv_has_access(user)`, anonymous users see no `viewset` entry |
+| C7 | confirmed | none; pinned by `MenuPerRoleTests` in `example/config/test_pages.py` |
+| C8 | filed (#393, open) | none; `xfail(strict=True)` in `tests/crud_views_adminlte/test_tables.py` |
+| C9 | confirmed | `.table-container` rule in `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css` |
+| C10 | confirmed | none (upstream documents it as deliberate) |
+| C11 | confirmed | none (upstream documents it as deliberate) |
+| A1 | anticipated, not hit | nothing; the sidebar is fed through `ADMINLTE["menu"]`, no partial is overridden |
+| A2 | confirmed | `ViewSetHrefFilter` / `ViewSetGateFilter` (`menu.py`), check `crud_views_adminlte.E013` |
+| A3 | confirmed (demo) | `ADMINLTE` in `example/config/settings.py` and the test settings |
+| A4 | confirmed | loaders / components setup in the test and demo settings, `docs/installation.md` |
+| A5 | confirmed | `skip_unsupported` in `noxfile.py` (3.15 cells run and pass) |
+| A6 | confirmed (not upstream) | `.cv-adminlte-badge-blue` in `crud_views_adminlte.css` |
+| A7 | confirmed | `content_header` override in `src/crud_views_adminlte/templates/crud_views_adminlte/page.html` |
+| A8 | confirmed | the theme's `breadcrumb` block plus `CRUD_VIEWS_BREADCRUMB_PREFIX` |
+| A9 | confirmed | none; drift test in `tests/crud_views_adminlte/test_host_drift.py` |
+| A10 | confirmed | `ViewSetGateFilter` drops the parents it emptied (`menu.py`) |
+| A11 | confirmed | `SILENCED_SYSTEM_CHECKS = ["adminlte.W003"]` (settings, documented) |
+| A12 | confirmed (demo) | `example/templates/registration/login.html` |
+| A13 | confirmed (demo) | `example/static/acme/acme.css` (four more components and a working sidebar rule since the browser pass) |
+| A14 | confirmed | none in the theme; the demo gates its Users header with `can` (`example/config/menu.py`) |
+| A15 | confirmed | container classes in `src/crud_views_adminlte/buttons.py` |
+| A16 | confirmed (demo) | ApexCharts in `example/dashboard/` |
+| A17 | confirmed | `card:title` in `buttons.py` |
+| A18 | confirmed | `.card-header.d-flex::after` in `crud_views_adminlte.css` |
+| A19 | confirmed | crud_views' table template in the settings; recorded in `docs/theme_internals.md` |
+| A20 | confirmed | none (cosmetic) |
+
+Comparison with the sibling trackers (Tabler: `tabler-test/dev/crud_views_upstream_findings_roastery.md`; CoreUI:
+`django-crud-views-core-ui/superpowers/notes/upstream-tracker.md`):
+
+- New, from the host-owned shell (the host owns the sidebar, the breadcrumb container and the messages slot, so
+  crud_views is asked things from outside its own pages): C1 (items without the wrapper), C2 (messages rendered by the
+  host), C3 (a ViewSet's label without a request), C4 (an icon as a CSS class), C5 (ViewSet lookup before the URLconf
+  is imported), C6 (a "may open" check covering every access mixin), C7 (Guardian lists in navigation). Tabler and
+  CoreUI owned their shells and called crud_views' tags in place, so none of these came up there. Closest
+  relatives: CoreUI U9 (breadcrumb class keys, #393) touches C1 but solves another problem; Tabler 23 / 37 (Guardian
+  checks in the object navbar) are the in-page side of C6 / C7.
+- New, not shell-related: C10 and C11 (bulk toolbar: actions shown without permission, no danger variant); bulk
+  actions were not part of the earlier demos.
+- Repeats: C8 = CoreUI U10 (`aria-sort`, filed together as #393). C9 is the list-table instance of Tabler 5 / 25
+  (workflow history and manage tables without `.table-responsive`, fixed upstream in #319 / #366); CoreUI worked
+  around it by overriding the table template, which this theme avoids.
+- Not repeated: CoreUI U1-U5 / U12 (`data-coreui-*`, `--cui-*` vs `--bs-*`) cannot occur on a Bootstrap 5.3 host.
+
+Open items from the browser pass that are not entries here (third party or demo-only):
+
+- The django-crud-views-extensions datetimepicker popup stays light in dark mode and marks today in its own blue: the
+  same finding as Tabler 32 ("The datetimepicker keeps its own look"); belongs to the extensions tracker.
+- The showcase's range slider keeps a `form-control` border: crispy-bootstrap5 appends `form-control` to every input,
+  `form-range` (set in `example/showcase/views.py`) does not reset the border. Cosmetic, crispy-bootstrap5's behaviour.
+- `crud_views_adminlte/page.html` keeps the context-action wrapper (`mt-2`, 0.5rem) on a page without context
+  actions. Kept: every crud page in the demo has actions; not worth a conditional.
+
 ## Entry template
 
 ```markdown
@@ -242,7 +320,7 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 
 ## A3. Defaults leak into every project
 
-- Status: anticipated · Severity: cosmetic
+- Status: confirmed · Severity: cosmetic
 - Symptom: a fresh project shows a Home link to `/`, docs links (`sidebar_docs_url`), AdminLTE.io footer text and a
   search button, none of which belong to the project.
 - Minimal repro: render any page with `ADMINLTE` unset; see `DEFAULTS` in `django_adminlte4/conf.py`
@@ -394,6 +472,15 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 - Workaround: the rules in `example/static/acme/acme.css` (brand block, plus the range slider's thumb). Seen in the
   browser (Task 6, light and dark): buttons, focus states, checked boxes, the sidebar's active link and the range
   thumb take the brand only through these rules; `BrandTests` in `example/dashboard/tests.py` pins them.
+- 2026-11-21, browser pass (Task 10): four more components were still blue, found by scanning every page's computed
+  colours for `rgb(13, 110, 253)` in light and dark mode: the active dropdown item (the shell's colour-mode switch,
+  row action menus), the active pagination page, the active vertical tab (`nav-pills`, object-detail tabs pack) and
+  the accordion pack (focus ring, the open group's chevron; in dark mode Bootstrap draws both chevrons in `#6ea8fe`).
+  Each is restated in `acme.css` through its component variable. The earlier sidebar rule
+  (`.app-sidebar .nav-link.active`) never applied: it loses to the host's
+  `.sidebar-wrapper .sidebar-menu>.nav-item>.nav-link.active`, so the active link stayed AdminLTE's translucent grey.
+  It now sets the host's own `--lte-sidebar-menu-active-bg` / `-color` on `.app-sidebar` (and on the dark sidebar
+  the shell always renders). `BrandTests` pins the new selectors and the variable.
 - Proposed upstream fix: build the host stylesheet with CSS-variable-driven primary component colours, or document a
   Sass override path for `--bs-primary`.
 - Verified against: adminlte-django 0.3.3
@@ -406,9 +493,12 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   of empty section titles.
 - Minimal repro: `ADMINLTE["menu"] = [{"header": "Users"}, {"text": "Users", "url": "/u/", "can": "auth.view_user"}]`
   for a user without `auth.view_user`: the "Users" header is rendered.
-- Workaround: none (the host's `GateFilter` runs after the theme's filters, so no theme filter can see the final
-  list); `NavigationTests.test_sections_follow_the_permissions` in `example/dashboard/tests.py` asserts the links,
-  not the headers.
+- Workaround: none in the theme (the host's `GateFilter` runs after the theme's filters, so no theme filter can see
+  the final list); `NavigationTests.test_sections_follow_the_permissions` in `example/dashboard/tests.py` asserts the
+  links, not the headers. The demo (Task 10) gates the one header whose section is a single `can` entry: `{"header":
+  "Users", "can": "auth.view_user"}` in `example/config/menu.py` (the host's `GateFilter` honours `can` on any item);
+  `NavigationTests.test_the_users_header_follows_the_users_permission`. Sections of `viewset` entries cannot repeat
+  their gate on the header; with the seeded roles they are never empty (sam and kim see every section except Users).
 - Proposed upstream fix: after gating, drop a `header` item followed by no visible item before the next header.
 - Verified against: adminlte-django 0.3.3
 
@@ -488,4 +578,16 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 - Proposed upstream fix: ship the card frame as a partial (or a template taking the base to extend from a variable,
   e.g. `{% extends adminlte_tables2_base|default:"django_tables2/bootstrap5.html" %}`), so a project can wrap a
   different table template in the AdminLTE card.
+- Verified against: adminlte-django 0.3.3
+
+## A20. Wrapped breadcrumbs get the header's line height per line
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `.app-main .app-content-header .breadcrumb { line-height: 2.5rem }` aligns a one-line breadcrumb with the
+  page title. A breadcrumb that wraps (crud_views' nested trails at 375px: Home / Customers / Quiet Corner Roasters /
+  Orders / Order #1040) takes 2.5rem per line, so the crumbs stand far apart.
+- Minimal repro: the demo's `/customer/28/order/112/detail/` at a 375px viewport: three breadcrumb lines, 40px each.
+- Workaround: none (found in the Task 10 browser pass; a theme rule would have to change the one-line alignment too).
+- Proposed upstream fix: centre the breadcrumb with `min-height: 2.5rem; align-items: center` instead of the line
+  height.
 - Verified against: adminlte-django 0.3.3

@@ -1149,6 +1149,7 @@ class BrandTests(SimpleTestCase):
             ".form-select:focus",
             ".form-check-input:focus",
             ".form-check-input:checked",
+            '.form-check-input[type="checkbox"]:indeterminate',  # the bulk toolbar's select-all (Task 8)
             ".nav-link:focus-visible",
             ".app-sidebar .nav-link.active",
         ):

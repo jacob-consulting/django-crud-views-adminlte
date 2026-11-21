@@ -143,6 +143,39 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   one object grant), next to the `cv_can_view` proposed in C6.
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
+## C8. The stock table header has no sorted-column state for assistive technology
+
+- Status: filed (#393, open) · Severity: annoyance
+- Symptom: in `crud_views/table/bootstrap5.html` (block `table.thead`) a sorted `<th>` shows the `table-sort-asc` /
+  `table-sort-desc` icon but carries no `aria-sort`, so a screen reader does not learn which column is sorted. The
+  icon condition compares `request.GET.sort` with the column name, so a table with a `prefix` (parameter
+  `<prefix>sort`) never shows its icon either.
+- Minimal repro: the testapp's `bulk_author` list (`BulkAuthorTable.Meta.prefix = "a-"`), `?a-sort=name`: no icon, no
+  `aria-sort`; `author-list?sort=name`: icon, no `aria-sort`.
+- Workaround: none, deliberately (no `table.thead` copy while #393 is pending, as the spec's fallback path says);
+  `test_sorted_column_aria_sort` in `tests/crud_views_adminlte/test_tables.py` is `xfail(strict=True)` for both cases
+  and starts passing, so failing the suite, when the pin bump brings #393.
+- Proposed upstream fix: #393 (D-03): `aria-sort` and the icon from the bound column (`column.is_ordered`,
+  `column.order_by_alias.is_descending`).
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949` (waiting on #393)
+
+## C9. The stock table wrapper is not responsive and has no class key
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `crud_views/table/bootstrap5.html` wraps the table in a bare `<div class="table-container">`: no
+  `.table-responsive`, no `CRUD_VIEWS_BUTTON_CLASSES` key. A list wider than the screen (the demo's orders list at
+  375px, wider still with the bulk select column) pushed the whole page sideways (`scrollWidth` 525 at a 375px
+  viewport). The buttons' absolutely positioned `.visually-hidden` labels also escape a plain scroller, since their
+  containing block is the page's `main`.
+- Minimal repro: any list with five or more columns at a 375px viewport.
+- Workaround: `.table-container { position: relative; overflow-x: auto; }` in
+  `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css`;
+  `test_table_container_scrolls_sideways` in `tests/crud_views_adminlte/test_tables.py`. The list action menus use
+  Popper's `fixed` strategy (`actions_menu_toggle.html`), so the scroller does not clip them (checked in the browser).
+- Proposed upstream fix: a `table:wrapper` class key (default `table-container table-responsive`), or
+  `.table-responsive` on the stock wrapper as `view_manage.html` already does for its tables.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
 ## adminlte-django (A)
 
 ## A1. Navbar, sidebar and footer are includes, not blocks
@@ -322,7 +355,8 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 
 - Status: confirmed · Severity: annoyance
 - Symptom: re-colouring the primary through `--bs-primary*` / `--bs-link-*` recolours links and utilities, but
-  `.btn-primary`, `.btn-outline-primary`, `.form-check-input:checked`, the form focus border and the sidebar's active
+  `.btn-primary`, `.btn-outline-primary`, `.form-check-input:checked` (and `:indeterminate`, seen on the bulk
+  toolbar's "Select this page" in Task 8), the form focus border and the sidebar's active
   link keep the compiled blue; a brand colour needs one override rule per component, in both colour modes.
   AdminLTE's `data-lte-primary` was not used by the host's pages and is not wired by the demo.
 - Minimal repro: set `:root { --bs-primary: #a0522d }`; render a primary button.
@@ -403,4 +437,24 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   `test_flex_card_header_drops_adminltes_clearfix` in `tests/crud_views_adminlte/test_registration.py`.
 - Proposed upstream fix: use `display: flow-root` on `.card-header` instead of the `::after` clearfix, or skip the
   clearfix for `.d-flex` headers.
+- Verified against: adminlte-django 0.3.3
+
+## A19. The tables2 card template is tied to tables2's own base template
+
+- Status: confirmed · Severity: annoyance
+- Symptom: the host's `django_tables2/adminlte.html` (card, `card-body p-0 table-responsive`, pagination in the card
+  footer) `{% extends "django_tables2/bootstrap5.html" %}`, so its wrapper cannot be put around another table
+  template. With `DJANGO_TABLES2_TEMPLATE` set to it, crud_views list pages lose what crud_views' table template adds:
+  the sort-direction icon (`table-sort-asc` / `-desc`), the pagination icons with hidden labels
+  (`pagination:hidden-label`), the active page as `<span aria-current="page">` and the disabled previous/next items.
+  The bulk select column and toolbar still work under it, and there is no card in a card (crud_views pages put
+  nothing around `{% render_table %}`).
+- Minimal repro: `DJANGO_TABLES2_TEMPLATE = "django_tables2/adminlte.html"`; open the demo's `/orders/?sort=customer`:
+  no sort icon (seen in the browser, Task 8).
+- Workaround: the theme uses crud_views' `crud_views/table/bootstrap5.html` (test and demo settings), without the
+  host's card; the choice is recorded in `docs/theme_internals.md` ("Tables"). `test_table_in_card` and
+  `test_sorted_column_icon` in `tests/crud_views_adminlte/test_tables.py` pin it.
+- Proposed upstream fix: ship the card frame as a partial (or a template taking the base to extend from a variable,
+  e.g. `{% extends adminlte_tables2_base|default:"django_tables2/bootstrap5.html" %}`), so a project can wrap a
+  different table template in the AdminLTE card.
 - Verified against: adminlte-django 0.3.3

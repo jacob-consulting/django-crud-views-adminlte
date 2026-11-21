@@ -229,6 +229,7 @@ CRUD_VIEWS_ICONS = {key: f"bi:{name}" for key, name in ACME_ICONS.items()}
 # the dashboard, a host page, keeps the host's own Home.
 CRUD_VIEWS_BREADCRUMB_PREFIX = [{"title": "Home", "url_name": "dashboard:index"}]  # tracker A8
 CRUD_VIEWS_DATETIMEPICKER = {"DEFAULTS": {"dayOfWeekStart": 1}}
+# crud_views' table template, not adminlte-django's django_tables2/adminlte.html (tracker A19)
 DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"
 # The manage pages list every view's permissions and who holds them. Since upstream #361 only active members of
 # CRUD_VIEWS_MANAGE_GROUP (default "CRUD_VIEWS_MANAGE"; the seed adds alex) may open them, whatever DEBUG says.

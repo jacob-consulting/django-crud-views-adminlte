@@ -8,6 +8,7 @@ edit_uri: blob/main/docs/
 
 nav:
     - Home: index.md
+    - Theme internals: theme_internals.md
 
 markdown_extensions:
     - admonition

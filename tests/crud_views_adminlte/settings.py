@@ -97,6 +97,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRUD_VIEWS_EXTENDS = "crud_views_adminlte/page.html"
 # The theme replaces the host's auto-derived breadcrumb on crud_views pages, so Home comes from here (tracker A8).
 CRUD_VIEWS_BREADCRUMB_PREFIX = [{"title": "Home", "url_name": "dashboard:index"}]
+# crud_views' table template, not the host's django_tables2/adminlte.html: the host's extends tables2's own bootstrap5
+# template and loses crud_views' sort icons and pagination markup (tracker A19; docs/theme_internals.md "Tables").
+DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_TZ = True

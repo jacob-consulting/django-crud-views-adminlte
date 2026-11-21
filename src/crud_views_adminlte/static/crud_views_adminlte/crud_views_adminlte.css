@@ -15,3 +15,13 @@
 .card-header.d-flex::after {
   display: none;
 }
+
+/* tracker C9: crud_views' table template wraps the table in a bare div.table-container, with no class key and no
+   .table-responsive, so a wide list (the bulk select column makes it wider) pushed the whole page sideways at 375px.
+   Bootstrap's .table-responsive behaviour on the wrapper; the list action menus use Popper's fixed strategy, so they
+   are not clipped by it. position: relative makes the wrapper the containing block of the buttons' absolutely
+   positioned .visually-hidden labels, which otherwise escaped the scroller and still widened the page. */
+.table-container {
+  position: relative;
+  overflow-x: auto;
+}

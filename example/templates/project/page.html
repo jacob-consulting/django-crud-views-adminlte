@@ -1,0 +1,3 @@
+{% extends "adminlte/page.html" %}
+{# The demo's page for host (non-crud) pages: adminlte-django's page plus the Acme head (favicon, brand CSS, jQuery). #}
+{% block extra_css %}{{ block.super }}{% include "project/_head.html" %}{% endblock %}

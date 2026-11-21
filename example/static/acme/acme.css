@@ -1,0 +1,128 @@
+/* tracker A13: brand overrides for components the compiled stylesheet colours with Bootstrap's blue. */
+/* Acme Roasters brand: sienna primary (#a0522d). adminlte-django ships compiled Bootstrap 5.3: the primary and the
+   links read from --bs-primary* / --bs-link-*, but the .btn-primary / .btn-outline-primary rules, the form focus
+   states and the sidebar's active link are compiled with Bootstrap's blue, so those get the brand too. Light mode on
+   :root, dark mode under [data-bs-theme=dark] (set on <html> by the shell's colour-mode switch). */
+:root,
+[data-bs-theme="light"] {
+  --bs-primary: #a0522d;
+  --bs-primary-rgb: 160, 82, 45;
+  --bs-primary-text-emphasis: #402112;
+  --bs-primary-bg-subtle: #ecdcd5;
+  --bs-primary-border-subtle: #d9baab;
+  --bs-link-color: #a0522d;
+  --bs-link-color-rgb: 160, 82, 45;
+  --bs-link-hover-color: #804224;
+  --bs-link-hover-color-rgb: 128, 66, 36;
+  --bs-focus-ring-color: rgba(160, 82, 45, 0.25);
+}
+
+[data-bs-theme="dark"] {
+  --bs-primary: #a0522d;
+  --bs-primary-rgb: 160, 82, 45;
+  --bs-primary-text-emphasis: #c69781;
+  --bs-primary-bg-subtle: #201009;
+  --bs-primary-border-subtle: #60311b;
+  /* sienna itself is too dark for text on the dark body (2.7:1); this tint reads at 5.9:1 */
+  --bs-link-color: #c69781;
+  --bs-link-color-rgb: 198, 151, 129;
+  --bs-link-hover-color: #d8b6a6;
+  --bs-link-hover-color-rgb: 216, 182, 166;
+  --bs-focus-ring-color: rgba(198, 151, 129, 0.25);
+}
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #a0522d;
+  --bs-btn-border-color: #a0522d;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #8f4929;
+  --bs-btn-hover-border-color: #804224;
+  --bs-btn-focus-shadow-rgb: 174, 108, 77;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #804224;
+  --bs-btn-active-border-color: #703a20;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #a0522d;
+  --bs-btn-disabled-border-color: #a0522d;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #a0522d;
+  --bs-btn-border-color: #a0522d;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #a0522d;
+  --bs-btn-hover-border-color: #a0522d;
+  --bs-btn-focus-shadow-rgb: 160, 82, 45;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #a0522d;
+  --bs-btn-active-border-color: #a0522d;
+  --bs-btn-disabled-color: #a0522d;
+  --bs-btn-disabled-border-color: #a0522d;
+}
+
+/* on the dark body the outline label takes the light tint, as the links do */
+[data-bs-theme="dark"] .btn-outline-primary {
+  --bs-btn-color: #c69781;
+  --bs-btn-disabled-color: #c69781;
+}
+
+/* the product cards' stripe (catalog/product_card.html) */
+.border-top-primary {
+  border-top-color: #a0522d !important;
+}
+
+/* Focus states: Bootstrap compiles its blue into the form controls' focus border and ring. */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: #d0a996;
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+
+.form-check-input:checked {
+  background-color: #a0522d;
+  border-color: #a0522d;
+}
+
+.nav-link:focus-visible {
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+
+.page-link:focus,
+.btn-close:focus {
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+
+/* The sidebar's active link and the login card's outline are AdminLTE's own primary. */
+.sidebar-menu .nav-link.active,
+.card-outline.card-primary {
+  --bs-primary: #a0522d;
+  --bs-primary-rgb: 160, 82, 45;
+}
+.card-outline.card-primary {
+  border-top-color: #a0522d;
+}
+.app-sidebar .nav-link.active {
+  background-color: #a0522d;
+  color: #fff;
+}
+
+/* "Show code" panel and "How this is themed" (config/showcode.py). The token colours and the background come from
+   /_code/pygments.css: Pygments' default style in light mode, github-dark under the dark colour mode. */
+.code-block {
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  max-height: 36rem;
+  overflow: auto;
+}
+.code-block pre {
+  margin: 0;
+  padding: .875rem 1rem;
+  background: transparent;
+  color: inherit;
+  font-size: .8125rem;
+  line-height: 1.5;
+}
+.code-files .nav-link { padding: .25rem .625rem; font-size: .8125rem; font-family: var(--bs-font-monospace); }
+.code-block-full { max-height: none; }

@@ -129,6 +129,20 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   navigation code.
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
+## C7. A Guardian ViewSet's menu entry is shown to every signed-in user
+
+- Status: confirmed · Severity: annoyance
+- Symptom: for a `GuardianViewSet` with `AncestorPolicy(accept_global_perms=True)` the list view's `cv_has_access(user)`
+  (no object) is `True` for a user holding no permission at all, because object-level grants cannot be seen without
+  an object. A sidebar entry gated through it (`ViewSetGateFilter`) therefore shows for everyone; the CoreUI demo's
+  hand-written menu showed Customers only for `view_customer` / `add_customer`. Related: C6.
+- Minimal repro: the demo's `customer` ViewSet; a user without permissions sees "Customers" in the sidebar
+  (`MenuPerRoleTests.test_a_user_without_permissions_sees_no_crud_entries` in `example/config/test_pages.py`).
+- Workaround: none; the entry opens an empty list for such a user.
+- Proposed upstream fix: a "may this user see anything here" check for navigation (global permission or at least
+  one object grant), next to the `cv_can_view` proposed in C6.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
 ## adminlte-django (A)
 
 ## A1. Navbar, sidebar and footer are includes, not blocks
@@ -171,6 +185,13 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   (`sidebar_docs_url`, `footer_left`, `footer_right`, `navbar_search`).
 - Workaround: `ADMINLTE["sidebar_docs_url"] = ""` in `tests/crud_views_adminlte/settings.py`; footer, search and the
   Home entry are set in the demo and test settings as they are hit.
+- Demo sub-items (`example/config/settings.py`, `ADMINLTE`; each default overridden there):
+  - A3a `sidebar_docs_url` (docs link) set to `""`.
+  - A3b `footer_left` (AdminLTE.io copyright, lazy) set to Acme text.
+  - A3c `footer_right` ("Anything you want") set to Acme text.
+  - A3d `navbar_search` (default `True`, the demo has no search) set to `False`.
+  - A3e `title`, `logo`, `logo_alt_text`, `logo_img`, `logo_img_alt` (AdminLTE branding) set to Acme Roasters and the
+    demo's favicon mark; `logo_img_class` keeps the default `opacity-75 shadow`.
 - Proposed upstream fix: neutral defaults (no external links, no placeholder footer), with the demo content living in
   the demo project only.
 - Verified against: adminlte-django 0.3.3
@@ -286,3 +307,27 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   `ADMINLTE["filters"]`), or an `ADMINLTE["menu_item_keys"]` setting extending `MENU_ITEM_KEYS`.
 - Verified against: adminlte-django 0.3.3
 
+## A12. The login page has no block after the form
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `registration/login.html` extends `adminlte/auth/login.html`, whose whole card body is the one block
+  `auth_body`; a project adding content to the login card (the demo's account picker) must override `auth_body` and
+  call `{{ block.super }}` before its own markup.
+- Minimal repro: extend `registration/login.html`; there is no block for content below the form (`auth_footer`).
+- Workaround: `example/templates/registration/login.html` overrides `auth_body` and appends below `block.super`.
+- Proposed upstream fix: an `auth_after_form` (or `auth_footer`) block inside the card body.
+- Verified against: adminlte-django 0.3.3
+
+## A13. The compiled stylesheet ignores `--bs-primary` in buttons and focus states
+
+- Status: anticipated · Severity: annoyance
+- Symptom: re-colouring the primary through `--bs-primary*` / `--bs-link-*` recolours links and utilities, but
+  `.btn-primary`, `.btn-outline-primary`, `.form-check-input:checked`, the form focus border and the sidebar's active
+  link keep the compiled blue; a brand colour needs one override rule per component, in both colour modes.
+  AdminLTE's `data-lte-primary` was not used by the host's pages and is not wired by the demo.
+- Minimal repro: set `:root { --bs-primary: #a0522d }`; render a primary button.
+- Workaround: the rules in `example/static/acme/acme.css` (brand block). Not yet confirmed in a browser: the browser
+  pass (Task 8) decides which of them are needed.
+- Proposed upstream fix: build the host stylesheet with CSS-variable-driven primary component colours, or document a
+  Sass override path for `--bs-primary`.
+- Verified against: adminlte-django 0.3.3

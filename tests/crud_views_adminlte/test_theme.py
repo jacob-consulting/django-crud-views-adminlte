@@ -86,7 +86,7 @@ def test_message_once_through_host(admin_client):
     assert text(alert) == "Created Author Octavia Butler"
     assert alert.cssselect("strong")  # the snippet's markup survives the host's {{ message }}
     second = admin_client.get(reverse("author-list"))
-    assert "Created author" not in second.content.decode()
+    assert "Created Author" not in second.content.decode()
     assert not page(second).cssselect(HOST_ALERT)
 
 

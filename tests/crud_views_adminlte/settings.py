@@ -1,5 +1,9 @@
 from pathlib import Path
 
+from django_adminlte4.conf import DEFAULT_FILTERS
+
+from crud_views_adminlte.menu import VIEWSET_FILTERS
+
 BASE_DIR = Path(__file__).resolve().parent
 
 SECRET_KEY = "test-only-not-secret"
@@ -78,8 +82,15 @@ ADMINLTE = {
     "sidebar_docs_url": "",
     "menu": [
         {"text": "Dashboard", "route": "dashboard:index", "icon": "bi bi-speedometer2"},
+        {"viewset": "author", "text": "Authors"},
     ],
+    # The theme's ViewSet filters before the host's (tracker A2; check crud_views_adminlte.E013).
+    "filters": [*VIEWSET_FILTERS, *DEFAULT_FILTERS],
 }
+
+# tracker A11: the host's menu check warns about every key it does not know, including the theme's "viewset" / "view";
+# crud_views_adminlte.E010-E015 check those entries instead.
+SILENCED_SYSTEM_CHECKS = ["adminlte.W003"]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("bootstrap5",)
 CRISPY_TEMPLATE_PACK = "bootstrap5"

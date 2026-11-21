@@ -65,6 +65,53 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   partial can call per message, so a host can use crud_views' classes and icons without crud_views owning the slot.
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
+## C3. No request-free label for a ViewSet
+
+- Status: confirmed · Severity: annoyance
+- Symptom: navigation that lives outside a crud_views page (a host sidebar) cannot ask a ViewSet for its display
+  name. `ViewSet.get_meta(context)` is the only accessor for the resolved `verbose_name_plural` (the ViewSet override,
+  else the model's or Resource's `_meta`, capitalized, translated), and it needs a `ViewContext` holding a `CrudView`
+  instance, which only exists inside a request to one of its views.
+- Minimal repro: build `{"viewset": "author"}` into a menu label without a view instance: `get_meta` cannot be
+  called; re-deriving from `viewset.verbose_name_plural` / `viewset.model._meta` duplicates upstream's logic.
+- Workaround: a `viewset` menu entry must carry its own `text`; `crud_views_adminlte.E014` in
+  `src/crud_views_adminlte/checks.py` reports a missing one.
+- Proposed upstream fix: a context-free `ViewSet.get_label(plural=True)` (or `verbose_name_plural_display` property)
+  that `get_meta` also uses.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
+## C4. No icon-to-CSS-class accessor
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: a host that takes an icon as a CSS class (adminlte-django's `<i class="nav-icon {{ item.icon }}">`)
+  cannot use a crud_views icon value (`ViewSet.icon_header = "bi:person-badge"`) directly: crud_views renders icons to
+  HTML (`render_icon`) and exposes the bare class only for host-placement libraries (`resolve_icon_name_class`).
+- Minimal repro: `render_icon("bi:person-badge")` gives `<i class="bi bi-person-badge" aria-hidden="true"></i>`;
+  nothing public returns `"bi bi-person-badge"`.
+- Workaround: `icon_class` in `src/crud_views_adminlte/menu.py` repeats `font_renderer`'s class formatting from the
+  public `resolve_icon` and `get_libraries` (`font` renderer only; other renderers give no icon, the entry then
+  needs its own `icon`). The result is computed once per process with the menu, so a later `CRUD_VIEWS_ICONS`
+  change is only seen after an `ADMINLTE` change or a restart.
+- Proposed upstream fix: `crud_views.lib.icons.resolve_icon_class(value) -> str | None` for `font` libraries and raw
+  classes, used by `font_renderer` itself.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
+## C5. ViewSet lookup depends on the URLconf having been imported
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `ViewSet.get_viewset(name)` raises `ViewSetNotFoundError` until the module that defines the ViewSet has
+  been imported, which normally happens only as a side effect of importing the URLconf. Code that looks ViewSets up
+  by name before the first URL resolution of the process (a menu built in a fresh worker, a system check, a template
+  rendered from a management command) finds none.
+- Minimal repro: in a fresh process, `django.setup()` then `ViewSet.get_viewset("author")`: `ViewSetNotFoundError`;
+  after `get_resolver().url_patterns` it succeeds. Found as an order-dependent failure under `pytest -n auto`.
+- Workaround: `ViewSetHrefFilter.__init__` and `check_menu` import the URLconf first
+  (`get_resolver(...).url_patterns`), `src/crud_views_adminlte/menu.py` and `checks.py`;
+  `test_menu_built_before_first_url_resolution` in `tests/crud_views_adminlte/test_menu.py`.
+- Proposed upstream fix: a documented loading hook (autodiscover of a `viewsets` module per app in
+  `CrudViewsConfig.ready()`, or `get_viewset` importing the URLconf on a miss).
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
 ## adminlte-django (A)
 
 ## A1. Navbar, sidebar and footer are includes, not blocks
@@ -83,16 +130,19 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 
 ## A2. `HrefFilter` runs before any per-request filter
 
-- Status: anticipated · Severity: annoyance
+- Status: confirmed · Severity: annoyance
 - Symptom: a menu entry whose URL is only known per request or per ViewSet is given `href="#"`, whatever order
   `ADMINLTE["filters"]` lists the filters in.
 - Minimal repro: put a request-dependent filter before `HrefFilter` in `ADMINLTE["filters"]` and give it an item
   without `url`/`route`; `split_filters` in `menu/builder.py` runs the request-independent filters (`HrefFilter`,
   `SearchFilter`) once per process first, so the item is already `href="#"`.
-- Workaround: none yet. The theme's menu filter sets `href` itself (or is split into a once-per-process URL part and a
-  per-request part).
-- Proposed upstream fix: honour the configured order, or document the split and expose a hook for custom
-  request-independent filters.
+- Workaround: two filters in `src/crud_views_adminlte/menu.py`: `ViewSetHrefFilter` (`per_request = False`, so it
+  lands in the once-per-process half, listed before `HrefFilter`, which then skips the items that have `href`) and
+  `ViewSetGateFilter` (per request: access). `VIEWSET_FILTERS` puts both in front of `DEFAULT_FILTERS`; check
+  `crud_views_adminlte.E013` reports a missing or misordered pair. `test_host_runs_static_filters_first` in
+  `tests/crud_views_adminlte/test_host_drift.py` fails when the host changes the split.
+- Proposed upstream fix: honour the configured order, or document the split as the contract for custom
+  request-independent filters (`per_request = False` already works as that hook; only the docs are missing).
 - Verified against: adminlte-django 0.3.3
 
 ## A3. Defaults leak into every project
@@ -186,3 +236,36 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   in `tests/crud_views_adminlte/test_host_drift.py` fails once the host keeps them.
 - Proposed upstream fix: append `{{ message.extra_tags }}` to the alert's class attribute.
 - Verified against: adminlte-django 0.3.3
+
+## A10. `GateFilter` never drops a parent it emptied
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: a submenu parent whose children are all hidden for the user stays in the sidebar as a dead link (the
+  partial renders an empty `submenu` as a plain `<a href="#">`). `GateFilter` drops such a parent only when it has
+  none of `url`/`route`/`href`, but in the per-request half `HrefFilter` (static half, run first, A2) has already
+  given every parent `href="#"`, so the branch never fires through the context processor.
+- Minimal repro: `{"text": "Library", "submenu": [{"text": "Secret", "url": "/secret/", "can": "app.view_secret"}]}`
+  for a user without that permission: "Library" is rendered, linking to `#`.
+- Workaround: `ViewSetGateFilter` in `src/crud_views_adminlte/menu.py` drops a parent it emptied unless the parent
+  links somewhere itself (`url`, `route` or an `href` other than `#`). Parents emptied by the host's own `can` checks
+  keep the host behaviour. `test_host_gate_keeps_emptied_parent_after_href` in
+  `tests/crud_views_adminlte/test_host_drift.py` fails once the host drops them.
+- Proposed upstream fix: in `GateFilter`, treat `href == "#"` like a missing link (or have `HrefFilter` leave
+  submenu parents without `href`).
+- Verified against: adminlte-django 0.3.3
+
+## A11. The menu check rejects keys of custom filters
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `adminlte.W003` warns about every menu-item key outside its fixed `MENU_ITEM_KEYS`, so a project using a
+  custom filter's keys (the theme's `"viewset"` / `"view"`) gets a warning per entry on every `check` / `runserver`,
+  and `manage.py check --fail-level WARNING` fails.
+- Minimal repro: `ADMINLTE = {"menu": [{"viewset": "author", "text": "Authors"}]}`, `manage.py check`.
+- Workaround: `SILENCED_SYSTEM_CHECKS = ["adminlte.W003"]` in `tests/crud_views_adminlte/settings.py` (and the demo,
+  to be documented for adopters); the theme's `crud_views_adminlte.E010`-`E015` check the `viewset` entries, but the
+  host's typo detection for its own keys is lost. `test_host_menu_check_rejects_custom_keys` in
+  `tests/crud_views_adminlte/test_host_drift.py` fails once the host accepts custom keys.
+- Proposed upstream fix: let a filter declare the keys it consumes (e.g. a `menu_keys` class attribute collected from
+  `ADMINLTE["filters"]`), or an `ADMINLTE["menu_item_keys"]` setting extending `MENU_ITEM_KEYS`.
+- Verified against: adminlte-django 0.3.3
+

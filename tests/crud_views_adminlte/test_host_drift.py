@@ -103,3 +103,42 @@ def test_host_messages_partial_drops_extra_tags():
     html = render_to_string("adminlte/partials/messages.html", {"messages": messages})
     assert "Careful" in html
     assert "cv-sticky" not in html, f"adminlte/partials/messages.html ({HOST}) now renders extra_tags (tracker A9)"
+
+
+def test_host_runs_static_filters_first():
+    # tracker A2: split_filters moves every per_request=False filter (HrefFilter) ahead of the per-request ones,
+    # whatever the configured order, so a per-request filter cannot set href before HrefFilter does. The theme splits
+    # its menu filter in two. Fails once the host honours the configured order: update the tracker.
+    from django_adminlte4.menu.builder import split_filters
+    from django_adminlte4.menu.filters import ActiveFilter, GateFilter, HrefFilter
+
+    static, dynamic = split_filters([GateFilter, ActiveFilter, HrefFilter])
+    assert (static, dynamic) == ([HrefFilter], [GateFilter, ActiveFilter]), f"split_filters changed ({HOST}, A2)"
+
+
+def test_host_gate_keeps_emptied_parent_after_href():
+    # tracker A10: in the per-request half, GateFilter only drops a parent whose submenu it emptied when the parent has
+    # no url/route/href, but HrefFilter (static half, run first) has already given it href="#". ViewSetGateFilter
+    # drops such parents itself. Fails once the host drops them: update the tracker.
+    from django.contrib.auth.models import AnonymousUser
+    from django.test import RequestFactory
+    from django_adminlte4.menu.builder import MenuBuilder
+    from django_adminlte4.menu.filters import GateFilter, HrefFilter
+
+    request = RequestFactory().get("/")
+    request.user = AnonymousUser()
+    menu = [{"text": "Library", "submenu": [{"text": "Secret", "url": "/secret/", "can": "app.view_secret"}]}]
+    prefiltered = MenuBuilder(menu, [HrefFilter]).menu()
+    (parent,) = MenuBuilder(prefiltered, [GateFilter], request).menu()
+    assert parent["submenu"] == [] and parent["href"] == "#", f"GateFilter now drops the emptied parent ({HOST}, A10)"
+
+
+def test_host_menu_check_rejects_custom_keys():
+    # tracker A11: adminlte.W003 flags any menu-item key outside its fixed MENU_ITEM_KEYS, so the theme's "viewset" /
+    # "view" keys warn and the test settings silence W003. Fails once the host accepts custom filter keys.
+    from django.test import override_settings
+    from django_adminlte4.checks import check_menu_items
+
+    with override_settings(ADMINLTE={"menu": [{"viewset": "author", "view": "list", "text": "Authors"}]}):
+        ids = [message.id for message in check_menu_items()]
+    assert ids == ["adminlte.W003", "adminlte.W003"], f"adminlte.W003 now accepts custom keys ({HOST}, A11)"

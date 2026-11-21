@@ -91,3 +91,14 @@ def test_app_order_check():
 def test_app_order_check_passes_and_is_registered():
     assert check_app_order() == []
     assert [m for m in run_checks() if m.id == "crud_views_adminlte.E001"] == []
+
+
+def test_manage_legend_badges_are_fixed_colours_and_distinct():
+    permission = ADMINLTE_BUTTON_CLASSES["manage:badge-permission"]
+    group = ADMINLTE_BUTTON_CLASSES["manage:badge-group"]
+    assert "primary" not in permission and "primary" not in group
+    assert permission != group
+    assert "cv-adminlte-badge-blue" in permission.split()
+    assert "cv-manage-badge-group" in group.split()  # solid magenta, upstream manage.css
+    css = (STATIC / "crud_views_adminlte" / "crud_views_adminlte.css").read_text()
+    assert "var(--bs-blue)" in css

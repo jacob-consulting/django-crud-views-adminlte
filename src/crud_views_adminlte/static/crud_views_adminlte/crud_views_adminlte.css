@@ -1,2 +1,10 @@
-/* django-crud-views AdminLTE theme. Intentionally empty: every rule added here needs an entry in
-   superpowers/notes/upstream-tracker.md and a "tracker <ID>" comment. */
+/* django-crud-views AdminLTE theme. Every rule needs an entry in superpowers/notes/upstream-tracker.md and a
+   "tracker <ID>" comment. */
+
+/* tracker A6: upstream's manage legend names the badge colours ("Blue: required permission · Magenta: required
+   group"), so the permission badge must not follow the project's primary (sienna in the demo). Bootstrap 5.3 defines
+   --bs-blue but ships no blue badge utility. Solid, like upstream's magenta .cv-manage-badge-group (#a61e6a). */
+.cv-adminlte-badge-blue {
+  color: #fff;
+  background-color: var(--bs-blue);
+}

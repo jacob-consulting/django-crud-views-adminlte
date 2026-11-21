@@ -9,9 +9,10 @@ plain Bootstrap 5.3 class. First pick; the browser pass (Task 6) refines them. H
 - ``cv-coreui-icon-btn`` (square icon buttons) is the same button classes plus ``px-2``; no theme CSS.
 - Upstream's ``btn-xs`` / ``btn-group-xs`` are not Bootstrap classes: ``btn-sm`` and a gap-spaced flex row.
 - ``nav nav-underline-border`` (CoreUI) is Bootstrap 5.3's ``nav nav-underline``.
-- CoreUI's ``cv-coreui-badge-blue`` / ``-pink`` helpers are not carried over: Bootstrap has no blue/pink utilities, so
-  ``manage:badge-permission`` uses ``primary`` subtle and ``manage:badge-group`` keeps upstream's
-  ``cv-manage-badge-group`` (styled by upstream's manage.css). Task 6 decides whether the legend needs more.
+- The manage legend names fixed colours ("Blue: required permission · Magenta: required group"), so neither may be
+  ``primary``. ``manage:badge-permission`` is the theme's ``cv-adminlte-badge-blue`` (``--bs-blue``, solid;
+  ``crud_views_adminlte.css``, tracker A6); ``manage:badge-group`` keeps upstream's ``cv-manage-badge-group``, solid
+  magenta from upstream's manage.css.
 - Subtle badges ``bg-*-subtle text-*-emphasis`` are valid Bootstrap 5.3 and used as in CoreUI.
 """
 
@@ -151,7 +152,7 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "manage:badge-model": "badge bg-secondary-subtle text-secondary-emphasis",
     "manage:badge-resource": "badge bg-info-subtle text-info-emphasis",
     "manage:badge-objects": "badge border border-secondary-subtle text-body-secondary",
-    "manage:badge-permission": "badge bg-primary-subtle text-primary-emphasis",
+    "manage:badge-permission": "badge cv-adminlte-badge-blue",
     "manage:badge-group": "badge cv-manage-badge-group",
     "manage:badge-policy-global": "badge bg-success-subtle text-success-emphasis",
     "manage:badge-policy-strict": "badge bg-success-subtle text-success-emphasis",

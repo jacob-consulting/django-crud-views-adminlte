@@ -100,3 +100,14 @@ None logged yet.
   (`skip_unsupported` in `noxfile.py`) instead of dropping them; this project declares 3.12-3.15.
 - Proposed upstream fix: add the 3.15 classifier and a CI cell once it is supported.
 - Verified against: adminlte-django 0.3.3
+
+## A6. No blue badge utility for the manage legend
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: crud_views' manage page legend says "Blue: required permission"; Bootstrap 5.3 / AdminLTE 4 define `--bs-blue`
+  but ship no blue badge class, and `bg-primary` would follow the project's primary (sienna in the demo).
+- Minimal repro: render a manage page with `manage:badge-permission` set to `badge bg-primary`.
+- Workaround: `.cv-adminlte-badge-blue` in `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css`.
+  A Bootstrap palette gap, not an upstream (crud_views / adminlte-django) defect; nothing to file.
+- Proposed upstream fix: none; kept as the theme's own helper.
+- Verified against: Bootstrap 5.3 via adminlte-django 0.3.3

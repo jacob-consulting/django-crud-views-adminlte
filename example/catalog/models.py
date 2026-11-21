@@ -1,7 +1,7 @@
 """The roastery's catalog: one polymorphic ``Product`` with a table per kind (beans, equipment, subscription).
 
 The kinds share the commerce fields on ``Product``; each adds what only it has. ``card_color`` and ``card_icon`` are the
-type's look on the card list (a CoreUI theme colour name, a semantic icon name from ``config.icons``).
+type's look on the card list (a Bootstrap theme colour name, a semantic icon name from ``config.icons``).
 """
 
 from decimal import Decimal
@@ -25,7 +25,9 @@ class Origin(models.Model):
 
 class FlavorNote(models.Model):
     name = models.CharField(max_length=50, unique=True)
-    color = models.CharField(max_length=20, default="secondary", help_text="A CoreUI theme colour name, e.g. warning.")
+    color = models.CharField(
+        max_length=20, default="secondary", help_text="A Bootstrap theme colour name, e.g. warning."
+    )
 
     class Meta:
         ordering = ["name"]

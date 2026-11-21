@@ -3,12 +3,19 @@
 The key set is every key of ``crud_views.lib.button_classes.DEFAULT_BUTTON_CLASSES`` (so each has a deliberate
 value, ``bulk:*`` and the structural ``*-tag``/``*-label`` keys included) plus the workflow keys, which are only
 registered when ``crud_views_workflow`` is installed. AdminLTE ships no button classes of its own, so every value is a
-plain Bootstrap 5.3 class. First pick; the browser pass (Task 6) refines them. How the CoreUI theme's values translate:
+plain Bootstrap 5.3 class, picked in the browser on the demo's list, card, detail, form, manage and workflow pages in
+light and dark mode. How the CoreUI theme's values translate:
 
 - ``btn-ghost-*`` does not exist in Bootstrap: ``btn-outline-*`` stands in.
 - ``cv-coreui-icon-btn`` (square icon buttons) is the same button classes plus ``px-2``; no theme CSS.
 - Upstream's ``btn-xs`` / ``btn-group-xs`` are not Bootstrap classes: ``btn-sm`` and a gap-spaced flex row.
-- ``nav nav-underline-border`` (CoreUI) is Bootstrap 5.3's ``nav nav-underline``.
+- ``nav nav-underline-border`` (CoreUI) is Bootstrap 5.3's ``nav nav-underline`` (upstream's default is pills; the
+  underline reads as section tabs under the owner's heading on AdminLTE's plain content header), with its own 1rem gap.
+- AdminLTE borders, pads and spaces every ``<fieldset>`` (tracker A15): the button rows crud_views renders as
+  fieldsets (``context``/``list:container``, ``formset:container``, ``card-order:container``) add
+  ``border-0 p-0 m-0``. Form sections keep AdminLTE's boxed fieldset, and its legend style, so ``conditional:legend``
+  and ``formset:legend`` stay empty.
+- AdminLTE floats ``.card-title`` left with no margin (tracker A17): ``card:title`` adds ``float-none mb-1``.
 - The manage legend names fixed colours ("Blue: required permission · Magenta: required group"), so neither may be
   ``primary``. ``manage:badge-permission`` is the theme's ``cv-adminlte-badge-blue`` (``--bs-blue``, solid;
   ``crud_views_adminlte.css``, tracker A6); ``manage:badge-group`` keeps upstream's ``cv-manage-badge-group``, solid
@@ -56,8 +63,8 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "card:secondary": "btn btn-sm btn-outline-secondary",
     "card:tertiary": "btn btn-sm btn-outline-secondary",
     "card:danger": "btn btn-sm btn-outline-danger",
-    "context:container": "d-flex flex-wrap gap-2",
-    "list:container": "d-flex flex-nowrap justify-content-end gap-1",
+    "context:container": "d-flex flex-wrap gap-2 border-0 p-0 m-0",  # tracker A15
+    "list:container": "d-flex flex-nowrap justify-content-end gap-1 border-0 p-0 m-0",  # tracker A15
     "card:container": "d-flex flex-wrap gap-2",
     "context:container-list": None,
     "list:container-list": None,
@@ -104,13 +111,13 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "conditional:legend": "",
     "formset:legend": "",
     "formset:control": "btn btn-outline-secondary",
-    "formset:container": "btn-group",
+    "formset:container": "btn-group border-0 p-0 m-0",  # tracker A15
     "formset:control-danger": "btn btn-outline-danger",
     "card-order:toggle": "btn btn-outline-secondary",
-    "card-order:container": "btn-group",
+    "card-order:container": "btn-group border-0 p-0 m-0",  # tracker A15
     "navbar:wrapper": "cv-navbar mb-3",
     "navbar:identity": "cv-navbar-identity mb-2 fw-medium mw-100 text-break",
-    "navbar:nav": "nav nav-underline flex-wrap gap-2",
+    "navbar:nav": "nav nav-underline flex-wrap",
     "navbar:item": "nav-item mw-100",
     "navbar:link": "nav-link d-flex align-items-center mw-100 text-break gap-2",
     "navbar:link-active": "active",
@@ -129,7 +136,7 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "card:flex": "flex-grow-1",
     "card:root": "card mb-4",
     "card:body": "card-body",
-    "card:title": "card-title",
+    "card:title": "card-title float-none mb-1",  # tracker A17
     "alert:error": "alert alert-danger",
     "alert:warning": "alert alert-warning",
     "alert:success": "alert alert-success",

@@ -9,6 +9,8 @@ from django.urls import reverse
 from sales.models import Address, Customer
 from sales.seed import seed as seed_sales
 
+from . import markup
+
 CONSUMER_POST = {"name": "Test Person", "kind": "consumer", "country": "DE", "city": "Bonn"}
 WHOLESALE_FIELDS = {"company": "Acme GmbH", "vat_id": "DE123", "price_tier": "A", "payment_terms": "net_30"}
 
@@ -56,7 +58,8 @@ class CustomerFormTests(SalesTestCase):
         self.assertIn('<select name="kind"', html)
         self.assertNotIn('name="is_wholesale"', html)
         self.assertIn('<option value="consumer" selected>Consumer</option>', html)
-        self.assertIn('<legend class="cv-coreui-section-legend">Wholesale terms</legend>', html)
+        # conditional:legend is empty: AdminLTE styles every fieldset legend itself
+        self.assertIn('<legend class="">Wholesale terms</legend>', html)
 
         # a consumer with the wholesale fields filled saves them empty
         response = self.client.post(reverse("customer-create"), {**CONSUMER_POST, **WHOLESALE_FIELDS})
@@ -208,9 +211,9 @@ class CustomerViewTests(SalesTestCase):
         self.login()
         customer = Customer.objects.first()
         html = self.client.get(reverse("customer-detail", kwargs={"pk": customer.pk})).content.decode()
-        page = html[html.index('class="page-header') : html.index("<main>")]
+        page = markup.header(html)
         self.assertNotIn("<h2", page)
-        self.assertIn("page-subtitle", page)
+        self.assertIn(markup.SUBTITLE, page)
         self.assertIn(f"<title>Details · {customer.name}", html.replace("&amp;", "&").replace("&#x27;", "'"))
 
     def test_consumer_detail_has_no_wholesale_terms(self):

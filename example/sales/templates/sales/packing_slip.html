@@ -1,6 +1,8 @@
 {% extends cv_extends %}
 {% load crud_views %}
-{# Print-friendly: the page chrome (sidebar, header, page header, footer) is d-print-none in the CoreUI layout. #}
+{# Print-friendly: AdminLTE's print styles hide the navbar, sidebar and footer; the page header (owner, tabs, title, #}
+{# breadcrumb, buttons) is hidden here, so only the slip prints. #}
+{% block content_header %}<div class="d-print-none">{{ block.super }}</div>{% endblock content_header %}
 
 {% block cv_context %}
 <button type="button" class="btn btn-primary" data-print>{% cv_icon "packing-slip" %} Print</button>

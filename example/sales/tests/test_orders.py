@@ -19,15 +19,13 @@ from django.utils.html import strip_tags
 from sales.models import Address, Customer, Order, OrderLine, OrderState
 from sales.permissions import grant_customer
 
+from . import markup
 from .test_customers import SalesTestCase
 
 
 def page_heading(response):
-    """The view's own heading: the last page-title (with a ViewSet Navigation bar, the owner's h1 comes first)."""
-    headings = re.findall(
-        r'<(h[1-6])\b[^>]*class="[^"]*\bpage-title\b[^"]*"[^>]*>(.*?)</\1>', response.content.decode(), re.S
-    )
-    return headings[-1][1] if headings else None
+    """The view's own heading: the last heading of the page header (the owner's h1 comes first)."""
+    return markup.page_heading(response.content.decode())
 
 
 def history(order):
@@ -93,7 +91,8 @@ class OrderFormTests(OrderTestCase):
                 html = self.client.get(url).content.decode()
                 self.assertEqual(html.count('class="row cv-formset-compact-headings"'), 1)
                 self.assertIn("cv-formset-row-compact", html)
-                self.assertIn('<legend class="cv-coreui-section-legend">', html)
+                # formset:legend is empty: AdminLTE styles every fieldset legend itself
+                self.assertIn('<legend class="">Line items</legend>', html)
                 for field in ("product", "quantity"):
                     self.assertRegex(html, rf'<label[^>]*for="id_lines-[^"]+-{field}"')
                 # finding 20: upstream's QuerysetConditions disables grind and bag size unless the row's product is
@@ -327,10 +326,10 @@ class OrderWorkflowTests(OrderTestCase):
         buttons = dict(re.findall(r'<button[^>]*value="(wf_\w+)"[^>]*>(.*?)</button>', html, re.S))
         tags = {name: tag for tag, name in re.findall(r'(<button[^>]*value="(wf_\w+)"[^>]*>)', html)}
         self.assertIn('class="btn btn-success', tags["wf_confirm"])
-        self.assertIn("<svg", buttons["wf_confirm"])
+        self.assertIn('<i class="bi bi-check-lg"', buttons["wf_confirm"])
         self.assertIn("Confirm", buttons["wf_confirm"])
         self.assertIn('class="btn btn-danger', tags["wf_cancel"])
-        self.assertIn("<svg", buttons["wf_cancel"])
+        self.assertIn('<i class="bi bi-', buttons["wf_cancel"])
         self.assertIn("Cancel order", buttons["wf_cancel"])
         self.assertIn('<span aria-hidden="true">*</span>', buttons["wf_cancel"])  # comment required
 

@@ -4,14 +4,18 @@ from html import unescape
 
 from django import template
 from django.utils.html import strip_tags
+from django.utils.safestring import SafeData
 from django_adminlte4.templatetags.adminlte import adminlte_title
 
 register = template.Library()
 
 
 def _text(value) -> str:
-    """Plain text of a rendered snippet: tags stripped, entities decoded, whitespace collapsed."""
-    return " ".join(unescape(strip_tags(str(value))).split())
+    """Plain text of a snippet, whitespace collapsed: markup (a safe string) has its tags stripped and entities
+    decoded; a plain string (an object's name) is text already and keeps any angle brackets it contains."""
+    if isinstance(value, SafeData):
+        value = unescape(strip_tags(str(value)))
+    return " ".join(str(value).split())
 
 
 @register.simple_tag(takes_context=True)

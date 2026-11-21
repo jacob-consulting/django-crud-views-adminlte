@@ -137,7 +137,7 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   an object. A sidebar entry gated through it (`ViewSetGateFilter`) therefore shows for everyone; the CoreUI demo's
   hand-written menu showed Customers only for `view_customer` / `add_customer`. Related: C6.
 - Minimal repro: the demo's `customer` ViewSet; a user without permissions sees "Customers" in the sidebar
-  (`MenuPerRoleTests.test_a_user_without_permissions_sees_no_crud_entries` in `example/config/test_pages.py`).
+  (`MenuPerRoleTests.test_a_user_without_permissions_still_sees_customers_c7` in `example/config/test_pages.py`).
 - Workaround: none; the entry opens an empty list for such a user.
 - Proposed upstream fix: a "may this user see anything here" check for navigation (global permission or at least
   one object grant), next to the `cv_can_view` proposed in C6.
@@ -320,14 +320,87 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 
 ## A13. The compiled stylesheet ignores `--bs-primary` in buttons and focus states
 
-- Status: anticipated · Severity: annoyance
+- Status: confirmed · Severity: annoyance
 - Symptom: re-colouring the primary through `--bs-primary*` / `--bs-link-*` recolours links and utilities, but
   `.btn-primary`, `.btn-outline-primary`, `.form-check-input:checked`, the form focus border and the sidebar's active
   link keep the compiled blue; a brand colour needs one override rule per component, in both colour modes.
   AdminLTE's `data-lte-primary` was not used by the host's pages and is not wired by the demo.
 - Minimal repro: set `:root { --bs-primary: #a0522d }`; render a primary button.
-- Workaround: the rules in `example/static/acme/acme.css` (brand block). Not yet confirmed in a browser: the browser
-  pass (Task 8) decides which of them are needed.
+- Workaround: the rules in `example/static/acme/acme.css` (brand block, plus the range slider's thumb). Seen in the
+  browser (Task 6, light and dark): buttons, focus states, checked boxes, the sidebar's active link and the range
+  thumb take the brand only through these rules; `BrandTests` in `example/dashboard/tests.py` pins them.
 - Proposed upstream fix: build the host stylesheet with CSS-variable-driven primary component colours, or document a
   Sass override path for `--bs-primary`.
+- Verified against: adminlte-django 0.3.3
+
+## A14. A menu header stays when every entry under it is hidden
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `{"header": "Catalog"}` followed by entries the user may not open (gated by `can`, or by the theme's
+  `viewset` gate) still renders the "Catalog" header, with nothing under it; a user with few permissions sees a column
+  of empty section titles.
+- Minimal repro: `ADMINLTE["menu"] = [{"header": "Users"}, {"text": "Users", "url": "/u/", "can": "auth.view_user"}]`
+  for a user without `auth.view_user`: the "Users" header is rendered.
+- Workaround: none (the host's `GateFilter` runs after the theme's filters, so no theme filter can see the final
+  list); `NavigationTests.test_sections_follow_the_permissions` in `example/dashboard/tests.py` asserts the links,
+  not the headers.
+- Proposed upstream fix: after gating, drop a `header` item followed by no visible item before the next header.
+- Verified against: adminlte-django 0.3.3
+
+## A15. Every `<fieldset>` is boxed
+
+- Status: confirmed · Severity: annoyance
+- Symptom: AdminLTE styles the bare `fieldset` element (`padding: 1rem; margin-bottom: 1rem; border: 1px solid`)
+  and its `legend`. Markup that uses a fieldset only to group controls semantically (crud_views' context and row
+  action bars, the formset row controls and the card ordering group, all `<fieldset aria-label=…>`) is drawn as a
+  bordered box, the page header's action bar sits in a padded frame and the formset's +/× buttons in nested frames.
+- Minimal repro: `<fieldset class="d-flex gap-2"><a class="btn btn-primary">x</a></fieldset>` in any host page.
+- Workaround: `context:container`, `list:container`, `formset:container` and `card-order:container` add
+  `border-0 p-0 m-0` in `src/crud_views_adminlte/buttons.py`; form sections (crispy fieldsets, the conditional
+  wholesale group, the formset) keep AdminLTE's box and legend style on purpose.
+  `test_fieldset_containers_undo_adminltes_boxed_fieldset` in `tests/crud_views_adminlte/test_registration.py`.
+- Proposed upstream fix: scope the fieldset style to forms (e.g. `.app-content form fieldset:not([class])`) or to an
+  opt-in class.
+- Verified against: adminlte-django 0.3.3
+
+## A16. The chart component needs the Vite pipeline
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `adminlte_chart` renders a `data-chartjs` container, but the code that draws it (`adminlte-plugins.js`,
+  `adminlte-charts.js`) exists only as Vite stubs; with `ADMINLTE["assets_mode"] = "static"` (the pre-built bundle
+  this theme and its demo use) nothing loads Chart.js, and the chart stays an empty box.
+- Minimal repro: `{% component "adminlte_chart" type="bar" series=… categories=… %}{% endcomponent %}` on a page
+  with `assets_mode` "static"; `adminlte/dist/js` has no Chart.js and no initialiser.
+- Workaround: the demo's revenue chart stays on ApexCharts (`example/dashboard/static/dashboard/revenue-chart.js`,
+  pinned with SRI in `example/dashboard/templates/dashboard/index.html`); `DashboardWidgetTests` in
+  `example/dashboard/tests.py`. The theming page says so.
+- Proposed upstream fix: ship the chart initialiser (and a pinned Chart.js, or a documented CDN hook) in the
+  pre-built bundle, or document that the Tool components need Vite.
+- Verified against: adminlte-django 0.3.3
+
+## A17. `.card-title` floats left with no margin
+
+- Status: confirmed · Severity: annoyance
+- Symptom: AdminLTE's global `.card-title { float: left; margin: 0; font-size: 1.1rem }` is meant for a card header
+  next to `.card-tools`. A card title in a card body (Bootstrap's own use, and crud_views' card list via the
+  `card:title` key) floats, and the next line of text wraps up beside it.
+- Minimal repro: `<div class="card-body"><h5 class="card-title">T</h5><p>Text</p></div>`: "Text" sits right of "T".
+- Workaround: `card:title` is `card-title float-none mb-1` in `src/crud_views_adminlte/buttons.py`; the demo's own
+  headings use `fs-6 fw-semibold` instead of `card-title` (`example/sales/forms.py`, login page).
+  `test_card_title_does_not_float` in `tests/crud_views_adminlte/test_registration.py`.
+- Proposed upstream fix: scope the rule to `.card-header > .card-title`.
+- Verified against: adminlte-django 0.3.3
+
+## A18. The card header's clearfix breaks flex headers
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `.card-header::after` is a block clearfix (for the floated title and tools). In a header that is a flex
+  container (`card-header d-flex justify-content-between`, upstream's manage cards) the pseudo-element becomes a third
+  flex item, so the help button lands in the middle of the header instead of at its end.
+- Minimal repro: `<div class="card-header d-flex justify-content-between"><h2>T</h2><a class="btn">?</a></div>`.
+- Workaround: `.card-header.d-flex::after { display: none; }` in
+  `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css`;
+  `test_flex_card_header_drops_adminltes_clearfix` in `tests/crud_views_adminlte/test_registration.py`.
+- Proposed upstream fix: use `display: flow-root` on `.card-header` instead of the `::after` clearfix, or skip the
+  clearfix for `.d-flex` headers.
 - Verified against: adminlte-django 0.3.3

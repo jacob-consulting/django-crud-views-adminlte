@@ -205,7 +205,8 @@ class OrderForm(CrispyModelForm):
             Row(
                 Div(Formsets(), css_class="col-lg-8"),
                 Div(
-                    HTML('<h3 class="card-title">Delivery</h3>'),
+                    # not .card-title: AdminLTE floats it (tracker A17)
+                    HTML('<h3 class="fs-6 fw-semibold mb-3">Delivery</h3>'),
                     "ship_to",
                     "requested_roast_date",
                     "notes",

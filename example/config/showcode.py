@@ -1,9 +1,10 @@
 """Source collector for the "Show code" panel and the "How this is themed" page.
 
 Reads files from disk and highlights them with Pygments. The set of files is fixed here, never taken from a request:
-an example app's own code (``collect_app_sources``), the theme app ``src/crud_views_coreui`` plus a whitelist of
-``settings.py`` assignments (``collect_theme_sources``), and a line count of ``src/django_coreui``
-(``collect_shell_files``). Only text files with a known suffix (``LEXERS``) are read.
+an example app's own code (``collect_app_sources``), and the theme app ``src/crud_views_adminlte`` plus a whitelist of
+``settings.py`` assignments (``collect_theme_sources``). The page shell, adminlte-django, is a third-party package: it
+is named with its installed version (``host_package``), not read. Only text files with a known suffix (``LEXERS``)
+are read.
 
 The crud pages only carry an empty panel shell (``code_app_label``); its content is fetched from
 ``/_code/<app_label>/`` when the panel opens (config/views.py:code_panel).
@@ -11,6 +12,7 @@ The crud pages only carry an empty panel shell (``code_app_label``); its content
 
 import ast
 from functools import lru_cache
+from importlib.metadata import version
 from pathlib import Path
 from typing import NamedTuple
 
@@ -23,8 +25,7 @@ from pygments.lexers import CssLexer, HtmlDjangoLexer, JavascriptLexer, PythonLe
 
 EXAMPLE_DIR = Path(settings.BASE_DIR).resolve()
 SRC_DIR = EXAMPLE_DIR.parent / "src"
-THEME_DIR = SRC_DIR / "crud_views_coreui"
-SHELL_DIR = SRC_DIR / "django_coreui"
+THEME_DIR = SRC_DIR / "crud_views_adminlte"
 SETTINGS_FILE = EXAMPLE_DIR / "config" / "settings.py"
 
 #: an app's Python files shown in the panel, in this order; ``views/*.py`` takes the place of ``views.py``
@@ -33,13 +34,20 @@ APP_FILES = ("models.py", "forms.py", "workflow.py", "resources.py", "views.py")
 #: the settings.py assignments the theming page shows; nothing else of settings.py is ever read out
 THEME_SETTINGS = (
     "INSTALLED_APPS",
+    "COMPONENTS",
+    "TEMPLATES",
+    "STATICFILES_FINDERS",
+    "ADMINLTE",
+    "SILENCED_SYSTEM_CHECKS",
     "CRISPY_ALLOWED_TEMPLATE_PACKS",
     "CRISPY_TEMPLATE_PACK",
     "CRUD_VIEWS_EXTENDS",
+    "CRUD_VIEWS_ICONS",
+    "CRUD_VIEWS_BREADCRUMB_PREFIX",
     "DJANGO_TABLES2_TEMPLATE",
 )
 
-#: CSS classes; the colours come from ``pygments_css()``, one light and one dark style scoped by data-coreui-theme
+#: CSS classes; the colours come from ``pygments_css()``, one light and one dark style scoped by data-bs-theme
 FORMATTER = HtmlFormatter()
 LIGHT_STYLE = "default"
 DARK_STYLE = "github-dark"
@@ -59,9 +67,9 @@ def _lexer(suffix: str):
 
 
 def pygments_css() -> str:
-    """The token colours for ``.code-block``: the light style by default, the dark one under CoreUI's dark mode."""
-    light = ":root:not([data-coreui-theme=dark]) .code-block"
-    dark = "[data-coreui-theme=dark] .code-block"
+    """The token colours for ``.code-block``: the light style by default, the dark one under Bootstrap's dark mode."""
+    light = ":root:not([data-bs-theme=dark]) .code-block"
+    dark = "[data-bs-theme=dark] .code-block"
     parts = []
     for selector, style in ((light, LIGHT_STYLE), (dark, DARK_STYLE)):
         formatter = HtmlFormatter(style=style)
@@ -200,16 +208,22 @@ def _package_files(root: Path) -> list[Path]:
 
 
 def collect_theme_sources() -> list[Source]:
-    """The whole crud_views theme: every file of ``src/crud_views_coreui`` plus the settings that switch it on."""
+    """The whole crud_views theme: every file of ``src/crud_views_adminlte`` plus the settings that switch it on."""
     return [*_sources(_package_files(THEME_DIR), lambda p: p.relative_to(SRC_DIR).as_posix()), _settings_excerpt()]
 
 
-class FileInfo(NamedTuple):
-    label: str
-    lines: int
+class HostPackage(NamedTuple):
+    name: str  # the distribution, as pip installs it
+    module: str  # the import name, as INSTALLED_APPS lists it
+    version: str
+    url: str
 
 
-def collect_shell_files() -> list[FileInfo]:
-    """``src/django_coreui`` (page shell, icons, crispy pack) as a file list with line counts, not highlighted."""
-    files = ((p, _read(p)) for p in _package_files(SHELL_DIR))
-    return [FileInfo(p.relative_to(SRC_DIR).as_posix(), _count(text)) for p, text in files if text is not None]
+def host_package() -> HostPackage:
+    """adminlte-django, the page shell the theme extends, with the version installed now."""
+    return HostPackage(
+        "adminlte-django",
+        "django_adminlte4",
+        version("adminlte-django"),
+        "https://github.com/ColorlibHQ/adminlte-django",
+    )

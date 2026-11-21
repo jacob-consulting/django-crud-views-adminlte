@@ -1,67 +1,55 @@
-{% extends "django_coreui/layouts/app.html" %}
-{% load static coreui %}
+{% extends "project/page.html" %}
+{% load static crud_views acme %}
+{# The roastery overview (dashboard/views.py:index): KPIs as adminlte-django info boxes, the rest in its cards. #}
 {% block title %}Dashboard{% endblock %}
-{% block pretitle %}Overview{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
-{% block actions %}
-{% if perms.sales.add_order %}
-<a href="{% url 'orders-create' %}" class="btn btn-primary">{% icon "cil-plus" "me-1" %}New order</a>
-{% endif %}
-{% endblock %}
 {% block content %}
-<div class="row g-4 mb-4">
+{% if perms.sales.add_order %}
+<div class="d-flex justify-content-end mb-3">
+  <a href="{% url 'orders-create' %}" class="btn btn-primary">{% cv_icon "add" "me-1" %}New order</a>
+</div>
+{% endif %}
+<div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="small text-body-secondary text-uppercase fw-semibold">Revenue (30 days)</div>
-      <div class="fs-4 fw-semibold my-1">€ {{ revenue_30d|floatformat:2 }}</div>
+    {% component "adminlte_info_box" text="Revenue (30 days)" title=revenue_title icon="revenue"|icon_class theme="primary" class="h-100 mb-0" %}
+      {% fill "default" %}
       {% if revenue_trend_pct is None %}
-      <div class="small text-body-secondary">No revenue in the 30 days before</div>
+      <span class="small text-body-secondary">No revenue in the 30 days before</span>
       {% elif revenue_trend_pct >= 0 %}
-      <div class="small text-success d-inline-flex align-items-center">{% icon "cil-arrow-top" "me-1" %} {{ revenue_trend_pct }}% vs. previous 30 days</div>
+      <span class="small text-success">{% cv_icon "trend-up" "me-1" %}{{ revenue_trend_pct }}% vs. previous 30 days</span>
       {% else %}
-      <div class="small text-danger d-inline-flex align-items-center">{% icon "cil-arrow-bottom" "me-1" %} {{ revenue_trend_pct }}% vs. previous 30 days</div>
+      <span class="small text-danger">{% cv_icon "trend-down" "me-1" %}{{ revenue_trend_pct }}% vs. previous 30 days</span>
       {% endif %}
-    </div></div>
+      {% endfill %}
+    {% endcomponent %}
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="small text-body-secondary text-uppercase fw-semibold">Open orders</div>
-      <div class="fs-4 fw-semibold my-1">{{ open_orders }}</div>
-      <div class="small text-body-secondary">{{ orders_waiting_to_roast }} waiting to be roasted</div>
-    </div></div>
+    {% component "adminlte_info_box" text="Open orders" title=open_orders icon="order"|icon_class theme="info" class="h-100 mb-0" %}
+      {% fill "default" %}<span class="small text-body-secondary">{{ orders_waiting_to_roast }} waiting to be roasted</span>{% endfill %}
+    {% endcomponent %}
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="small text-body-secondary text-uppercase fw-semibold">Active subscriptions</div>
-      <div class="fs-4 fw-semibold my-1">{{ active_subscriptions }}</div>
-      <div class="small text-body-secondary">{% if next_subscription_run and next_subscription_run <= today %}Run due now{% elif next_subscription_run %}Next run: {{ next_subscription_run|date:"D j M" }}{% else %}Nothing scheduled{% endif %}</div>
-    </div></div>
+    {% component "adminlte_info_box" text="Active subscriptions" title=active_subscriptions icon="subscription"|icon_class theme="success" class="h-100 mb-0" %}
+      {% fill "default" %}<span class="small text-body-secondary">{% if next_subscription_run and next_subscription_run <= today %}Run due now{% elif next_subscription_run %}Next run: {{ next_subscription_run|date:"D j M" }}{% else %}Nothing scheduled{% endif %}</span>{% endfill %}
+    {% endcomponent %}
   </div>
   {% if perms.roastery.view_greenlot %}
   <div class="col-sm-6 col-xl-3">
-    <div class="card h-100"><div class="card-body">
-      <div class="small text-body-secondary text-uppercase fw-semibold">Green stock</div>
-      <div class="fs-4 fw-semibold my-1">{{ green_stock_kg|floatformat:"0g" }} kg</div>
-      <div class="progress progress-thin mt-2" role="progressbar" aria-label="Share of purchased green coffee still on hand" aria-valuenow="{{ green_stock_pct }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-warning" style="width: {{ green_stock_pct }}%"></div></div>
-    </div></div>
+    {% component "adminlte_info_box" text="Green stock" title=green_stock_title icon="green-stock"|icon_class theme="warning" progress=green_stock_pct progress_text=green_stock_text class="h-100 mb-0" %}{% endcomponent %}
   </div>
   {% endif %}
 </div>
 
-<div class="card mb-4">
-  <div class="card-header d-flex align-items-center">
-    <h3 class="h6 mb-0">Revenue per week</h3>
-    <span class="small text-body-secondary ms-auto">Last 12 weeks</span>
-  </div>
-  <div class="card-body">
-    <div id="chart-revenue" class="chart" role="img" aria-label="Revenue per week in euro, last 12 weeks"></div>
-  </div>
-</div>
+{# The revenue chart stays on ApexCharts: adminlte-django's chart component needs its Vite pipeline (tracker A16). #}
+{% component "adminlte_card" title="Revenue per week" class="mb-4" %}
+  {% fill "tools" %}<span class="small text-body-secondary">Last 12 weeks</span>{% endfill %}
+  {% fill "default" %}<div id="chart-revenue" class="chart" role="img" aria-label="Revenue per week in euro, last 12 weeks"></div>{% endfill %}
+{% endcomponent %}
 
 <div class="row g-4">
   <div class="{% if perms.roastery.view_greenlot %}col-lg-8{% else %}col-12{% endif %}">
-    <div class="card h-100">
-      <div class="card-header"><h3 class="h6 mb-0">Orders to roast this week</h3></div>
+    {% component "adminlte_card" title="Orders to roast this week" class="h-100 mb-0" body_class="p-0" %}
+      {% fill "default" %}
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead><tr><th>Order</th><th>Customer</th><th>Coffee</th><th>Lines</th><th>Roast by</th><th>Status</th></tr></thead>
@@ -70,7 +58,7 @@
             {% with lines=order.lines.all colour=order.customer.avatar_color %}
             <tr>
               <td><a href="{% url 'order-detail' customer_pk=order.customer_id pk=order.pk %}">#{{ order.number }}</a></td>
-              <td><span class="avatar avatar-sm me-2 bg-{{ colour }}-subtle text-{{ colour }}-emphasis fw-semibold">{{ order.customer.initials }}</span>{{ order.customer.name }}</td>
+              <td><span class="acme-avatar me-2 bg-{{ colour }}-subtle text-{{ colour }}-emphasis fw-semibold">{{ order.customer.initials }}</span>{{ order.customer.name }}</td>
               <td>{% if lines %}{{ lines.0.product.name }}{% if lines|length > 1 %} <span class="text-body-secondary">+{{ lines|length|add:"-1" }} more</span>{% endif %}{% else %}<span class="text-body-secondary">–</span>{% endif %}</td>
               <td>{{ lines|length }}</td>
               <td>{{ order.requested_roast_date|date:"D j M"|default:"–" }}</td>
@@ -83,12 +71,13 @@
           </tbody>
         </table>
       </div>
-    </div>
+      {% endfill %}
+    {% endcomponent %}
   </div>
   {% if perms.roastery.view_greenlot %}
   <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-header"><h3 class="h6 mb-0">Recent cuppings</h3></div>
+    {% component "adminlte_card" title="Recent cuppings" class="h-100 mb-0" body_class="p-0" %}
+      {% fill "default" %}
       <div class="list-group list-group-flush">
         {% for session in recent_cuppings %}
         <a class="list-group-item list-group-item-action d-flex" href="{% url 'cupping-detail' lot_pk=session.lot_id pk=session.pk %}">
@@ -104,13 +93,15 @@
         <div class="list-group-item text-body-secondary text-center py-4">No cuppings yet.</div>
         {% endfor %}
       </div>
-    </div>
+      {% endfill %}
+    {% endcomponent %}
   </div>
   {% endif %}
 </div>
 {{ revenue_chart|json_script:"revenue-data" }}
 {% endblock %}
 {% block extra_js %}
+{{ block.super }}
 {# ApexCharts from npm, pinned with SRI (the same file as the copy the sister demo loaded). #}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@7.0.0/dist/apexcharts.min.js" integrity="sha384-+hxfT+iExRCsHFUrlWam6cWHSCNZg04vcfjwv9UXGl1M8zs+UrU9Me+z+ciPJZFC" crossorigin="anonymous"></script>
 <script src="{% static 'dashboard/revenue-chart.js' %}"></script>

@@ -1,6 +1,5 @@
 import random
 from copy import deepcopy
-from pathlib import Path
 from unittest.mock import patch
 
 from dashboard.seed import seed as seed_dashboard
@@ -199,10 +198,15 @@ class ProductViewTests(CatalogTestCase):
             self.assertEqual(self.client.post(create, {}).status_code, 403)
 
 
-class ProductCardCssTests(SimpleTestCase):
-    def test_product_card_title_keeps_its_tight_margin(self):
-        css = (Path(__file__).resolve().parents[1] / "static" / "acme" / "acme.css").read_text()
-        self.assertIn("[data-product-card] ~ .card-body .card-title { margin-bottom: .25rem; }", css)
+class ProductCardMarkupTests(CatalogTestCase):
+    def test_product_card_title_sits_close_and_does_not_float(self):
+        # AdminLTE floats every .card-title (a card-header title) with no margin: the theme's card:title adds
+        # float-none and a tight mb-1 so the summary line sits under the title, not beside it
+        self.login()
+        html = self.client.get(reverse("product-list")).content.decode()
+        self.assertIn('class="card-title float-none mb-1"', html)
+        # the stripe in the kind's colour: Bootstrap's border-top + border-3 + border-<colour>, no theme CSS
+        self.assertRegex(html, r'<div class="border-top border-3 border-\w+ rounded-top" data-product-card="\d+">')
 
 
 class ProductMappingCheckTests(SimpleTestCase):

@@ -102,3 +102,21 @@ def test_manage_legend_badges_are_fixed_colours_and_distinct():
     assert "cv-manage-badge-group" in group.split()  # solid magenta, upstream manage.css
     css = (STATIC / "crud_views_adminlte" / "crud_views_adminlte.css").read_text()
     assert "var(--bs-blue)" in css
+
+
+def test_fieldset_containers_undo_adminltes_boxed_fieldset():
+    # tracker A15: AdminLTE borders and pads every <fieldset>; the button rows rendered as fieldsets stay flat
+    for key in ("context:container", "list:container", "formset:container", "card-order:container"):
+        assert {"border-0", "p-0", "m-0"} <= set(ADMINLTE_BUTTON_CLASSES[key].split()), key
+
+
+def test_card_title_does_not_float():
+    # tracker A17: AdminLTE's .card-title floats left with no margin (a card-header title)
+    assert {"card-title", "float-none"} <= set(ADMINLTE_BUTTON_CLASSES["card:title"].split())
+
+
+def test_flex_card_header_drops_adminltes_clearfix():
+    # tracker A18: AdminLTE's .card-header::after clearfix is a flex item in a d-flex header
+    css = (STATIC / "crud_views_adminlte" / "crud_views_adminlte.css").read_text()
+    assert ".card-header.d-flex::after" in css
+    assert "tracker A18" in css

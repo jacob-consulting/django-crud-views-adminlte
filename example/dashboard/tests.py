@@ -4,19 +4,17 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import urlencode
 
-import crud_views_coreui
-import django_coreui
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.staticfiles import finders
 from django.core.management import call_command
-from django.template.loader import render_to_string
 from django.test import SimpleTestCase, TestCase
 from django.urls import get_resolver, reverse
 from django.utils import timezone
 from django_fsm import FSMFieldMixin
+from lxml import html as lxml_html
 
 User = get_user_model()
 
@@ -29,7 +27,7 @@ class AuthTests(TestCase):
 
     def test_login_page_renders(self):
         response = self.client.get(reverse("login"))
-        self.assertContains(response, "Login to your account")
+        self.assertContains(response, "Sign in to start your session")  # adminlte-django's login card
 
     def test_wrong_password_shows_error(self):
         User.objects.create_user("ann", password="s3cret-pass")
@@ -81,11 +79,33 @@ class DemoAccountTests(TestCase):
 
 
 class DashboardIconTests(TestCase):
-    def test_dashboard_icons_still_render(self):
+    def test_dashboard_icons_are_bootstrap_icons(self):
         self.client.force_login(User.objects.create_user("ann"))
         html = self.client.get(reverse("dashboard:index")).content.decode()
-        self.assertIn("<svg", html)
-        self.assertNotIn("<i class=", html)
+        self.assertIn('class="bi bi-currency-euro"', html)  # the revenue info box, from config.icons
+        self.assertNotIn("<svg", html)
+
+
+class DashboardWidgetTests(TestCase):
+    """The KPIs are adminlte-django info boxes, the panels its cards; the chart stays ApexCharts (tracker A16)."""
+
+    def setUp(self):
+        call_command("seed_demo", stdout=StringIO())
+        self.client.force_login(User.objects.get(username="alex"))
+        self.root = lxml_html.fromstring(self.client.get(reverse("dashboard:index")).content.decode())
+
+    def test_kpis_are_info_boxes(self):
+        texts = [" ".join(e.text_content().split()) for e in self.root.cssselect(".info-box .info-box-text")]
+        self.assertEqual(texts, ["Revenue (30 days)", "Open orders", "Active subscriptions", "Green stock"])
+        number = self.root.cssselect(".info-box .info-box-number")[0].text_content()
+        self.assertRegex(number, r"^€ [\d,]+\.\d\d$")
+        self.assertEqual(len(self.root.cssselect(".info-box .progress .progress-bar")), 1)  # green stock
+
+    def test_panels_are_cards(self):
+        titles = [" ".join(e.text_content().split()) for e in self.root.cssselect(".card > .card-header .card-title")]
+        self.assertEqual(titles, ["Revenue per week", "Orders to roast this week", "Recent cuppings"])
+        self.assertEqual(len(self.root.cssselect("#chart-revenue")), 1)
+        self.assertFalse(self.root.cssselect("[data-chartjs]"))  # the host's Chart.js component is not used
 
 
 class UserListTests(TestCase):
@@ -104,6 +124,7 @@ class UserListTests(TestCase):
         response = self.client.get(reverse("dashboard:users"))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'id="modal-user"')
+        self.assertNotContains(response, 'data-bs-target="#modal-user"')
 
     def test_search(self):
         User.objects.create_user("ann", email="ann@example.com")
@@ -136,8 +157,16 @@ class UserListTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
-        self.assertContains(response, "data-show-on-load", status_code=400)
-        self.assertContains(response, "is-invalid", status_code=400)
+        modal = lxml_html.fromstring(response.content.decode()).cssselect("#modal-user")[0]
+        self.assertIn("data-show-on-load", modal.attrib)  # adminlte-django's modal, reopened by the page script
+        self.assertTrue(modal.cssselect("form#form-user .is-invalid"))  # crispy-bootstrap5's error markup
+        self.assertTrue(modal.cssselect('.modal-footer button[type="submit"][form="form-user"]'))
+
+    def test_modal_is_closed_on_a_plain_get(self):
+        modal = lxml_html.fromstring(self.client.get(reverse("dashboard:users")).content.decode()).cssselect(
+            "#modal-user"
+        )[0]
+        self.assertNotIn("data-show-on-load", modal.attrib)
 
     def test_create_requires_add_permission(self):
         viewer = User.objects.create_user("viewer")
@@ -147,76 +176,54 @@ class UserListTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class LayoutSwitchTests(TestCase):
-    """CoreUI's admin layout: one sidebar, one header, and the shell's switch for colour mode and sidebar state."""
+class LayoutTests(TestCase):
+    """adminlte-django's layout: one navbar, one sidebar, the colour-mode switch, the pre-built asset bundle."""
 
     def setUp(self):
         self.client.force_login(User.objects.create_user("switcher"))
         self.html = self.client.get(reverse("dashboard:index")).content.decode()
-
-    def sidebar(self):
-        return self.html[self.html.index('<div class="sidebar ') : self.html.index('<div class="wrapper')]
+        self.root = lxml_html.fromstring(self.html)
 
     def test_page_renders_one_sidebar_and_one_header(self):
-        self.assertEqual(self.html.count('<div class="sidebar sidebar-dark sidebar-fixed'), 1)
-        self.assertEqual(self.html.count('<header class="header'), 1)
-        self.assertNotIn("navbar-vertical", self.html)  # no top bar left
-
-    def test_sidebar_comes_before_the_wrapper(self):
-        self.assertLess(self.html.index('id="sidebar"'), self.html.index('<div class="wrapper'))
+        self.assertEqual(len(self.root.cssselect("nav.app-header")), 1)
+        self.assertEqual(len(self.root.cssselect("aside.app-sidebar")), 1)
+        self.assertEqual(len(self.root.cssselect("main.app-main")), 1)
 
     def test_header_toggles_the_sidebar(self):
-        self.assertIn('data-sidebar-toggle="#sidebar"', self.html)
-        self.assertIn('data-coreui-toggle="unfoldable"', self.sidebar())
+        self.assertEqual(len(self.root.cssselect('nav.app-header [data-lte-toggle="sidebar"]')), 1)
 
     def test_no_id_is_used_twice(self):
         ids = re.findall(r"\sid=\"([^\"]+)\"", self.html)
         self.assertEqual(sorted(ids), sorted(set(ids)))
 
-    def test_one_layout_switch_in_the_header(self):
-        self.assertEqual(self.html.count('aria-label="Layout settings"'), 1)
-        header = self.html[self.html.index('<header class="header') : self.html.index("</header>")]
-        self.assertIn('aria-label="Layout settings"', header)
+    def test_one_colour_mode_switch_in_the_header(self):
+        for mode in ("light", "dark", "auto"):
+            with self.subTest(mode=mode):
+                self.assertEqual(len(self.root.cssselect(f'nav.app-header [data-bs-theme-value="{mode}"]')), 1)
 
-    def test_switch_offers_colour_modes_and_sidebar_states(self):
-        for label, layout_settings in (
-            ("Light", '{"theme":"light"}'),
-            ("Dark", '{"theme":"dark"}'),
-            ("Auto", '{"theme":"auto"}'),
-            ("Default", '{"sidebar":"default"}'),
-            ("Narrow", '{"sidebar":"narrow"}'),
-            ("Unfoldable", '{"sidebar":"unfoldable"}'),
-        ):
-            with self.subTest(label=label):
-                self.assertRegex(
-                    self.html, rf"data-layout-settings='{re.escape(layout_settings)}'[^>]*>(<svg.*?</svg>)?{label}<"
-                )
+    def test_prebuilt_assets_are_loaded_and_exist(self):
+        # ADMINLTE["assets_mode"] = "static": the package's bundle, no Vite dev server
+        for path in ("adminlte/dist/css/adminlte.min.css", "adminlte/dist/js/adminlte.min.js"):
+            with self.subTest(path=path):
+                self.assertIn(f"/static/{path}", self.html)
+                self.assertIsNotNone(finders.find(path))
+        self.assertEqual(settings.ADMINLTE["assets_mode"], "static")
 
-    def test_stylesheet_is_loaded_and_exists(self):
-        self.assertIn('href="/static/django_coreui/django_coreui.css"', self.html)
-        self.assertIsNotNone(finders.find("django_coreui/django_coreui.css"))
-
-    def test_switch_script_is_loaded_and_exists(self):
-        self.assertIn('src="/static/django_coreui/layout-switch.js"', self.html)
-        self.assertIsNotNone(finders.find("django_coreui/layout-switch.js"))
-
-    def test_server_sets_no_layout_default(self):
-        # The demo keeps the package defaults (layout_defaults.html is {}): colour mode auto, default sidebar, and
-        # CoreUI's sidebar is dark already. What the user picks lands in localStorage.
-        self.assertIn('<html lang="en">', self.html)
-        self.assertNotIn("data-coreui-layout-defaults", self.html)
+    def test_server_sets_no_colour_mode(self):
+        # the shell's colour-mode switch keeps the user's pick in localStorage; the server renders no default
+        self.assertIsNone(self.root.get("data-bs-theme"))
 
 
 class LayoutBoundaryTests(SimpleTestCase):
     def test_example_overrides_the_site_name(self):
-        self.assertEqual(render_to_string("django_coreui/includes/site_name.html"), "Acme Roasters")
+        self.assertEqual(settings.ADMINLTE["title"], "Acme Roasters")
 
-    def test_boundary_scan_covers_only_the_two_packages(self):
-        # Under nox the packages live in site-packages: the scan must not walk every installed distribution.
-        roots = {Path(django_coreui.__file__).parent, Path(crud_views_coreui.__file__).parent}
+    def test_boundary_scan_covers_only_the_theme(self):
+        # Under nox the package lives in site-packages: the scan must not walk every installed distribution.
+        root = _theme_dir()
         files = list(_package_sources())
         self.assertTrue(files)
-        self.assertTrue(all(any(path.is_relative_to(root) for root in roots) for path in files))
+        self.assertTrue(all(path.is_relative_to(root) for path in files))
 
     def test_src_does_not_import_the_example(self):
         pattern = re.compile(
@@ -433,9 +440,10 @@ class RoasteryDashboardTests(TestCase):
             r'"https://cdn.jsdelivr.net/npm/apexcharts@\d+\.\d+\.\d+/dist/apexcharts.min.js"[^>]*'
             r'integrity="sha384-[^"]+"[^>]*crossorigin="anonymous"',
         )
-        # the only CDN packages: CoreUI (the shell) and ApexCharts
+        # the only jsDelivr package: ApexCharts (the shell's assets are served from static, assets_mode "static")
         packages = set(re.findall(r'(?:href|src)="https://cdn\.jsdelivr\.net/npm/((?:@[\w-]+/)?[\w-]+)@', html))
-        self.assertEqual(packages, {"@coreui/coreui", "apexcharts"})
+        self.assertEqual(packages, {"apexcharts"})
+        self.assertNotIn("@coreui", html)
         self.assertIn('id="revenue-data"', html)
         self.assertIsNotNone(finders.find("dashboard/revenue-chart.js"))
 
@@ -471,7 +479,7 @@ class ShowCodeTests(TestCase):
         self.assertIn('data-code-file="sales/views/customers.py"', fragment.content.decode())
 
     def test_code_panel_endpoint_rejects_other_labels(self):
-        for label in ("auth", "nonexistent", "dashboard", "crud_views_coreui", "django_coreui"):
+        for label in ("auth", "nonexistent", "dashboard", "crud_views_adminlte", "django_adminlte4"):
             self.assertEqual(self.client.get(f"/_code/{label}/").status_code, 404, label)
         for path in ("/_code/../config/", "/_code/..%2Fconfig/", "/_code/config/settings.py/"):
             self.assertEqual(self.client.get(path).status_code, 404, path)
@@ -485,8 +493,8 @@ class ShowCodeTests(TestCase):
         css = self.client.get(reverse("pygments-css"))
         self.assertEqual(css["Content-Type"], "text/css")
         text = css.content.decode()
-        self.assertIn(":root:not([data-coreui-theme=dark]) .code-block .k {", text)
-        self.assertIn("[data-coreui-theme=dark] .code-block .k {", text)
+        self.assertIn(":root:not([data-bs-theme=dark]) .code-block .k {", text)
+        self.assertIn("[data-bs-theme=dark] .code-block .k {", text)
         self.assertNotIn("\npre {", "\n" + text)  # nothing unscoped
         self.assertIn(reverse("pygments-css"), self.client.get(reverse("theming")).content.decode())
 
@@ -523,7 +531,7 @@ class ShowCodeTests(TestCase):
             sources = collect_sources_for_app(app)
             self.assertTrue(sources, app)
             for source in sources:
-                for name in ("django_coreui", "crud_views_coreui"):
+                for name in ("django_adminlte4", "crud_views_adminlte"):
                     self.assertNotIn(name, _text(source.html), source.label)
 
     def test_code_panel_lists_models_views_and_templates_but_not_seed(self):
@@ -570,10 +578,11 @@ class ShowCodeTests(TestCase):
 
         labels = [s.label for s in collect_theme_sources()]
         for label in (
-            "crud_views_coreui/apps.py",
-            "crud_views_coreui/buttons.py",
-            "crud_views_coreui/static/crud_views_coreui/coreui-adapters.js",
-            "crud_views_coreui/templates/crud_views_coreui/page.html",
+            "crud_views_adminlte/apps.py",
+            "crud_views_adminlte/buttons.py",
+            "crud_views_adminlte/menu.py",
+            "crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css",
+            "crud_views_adminlte/templates/crud_views_adminlte/page.html",
             "example/config/settings.py (excerpt)",
         ):
             self.assertIn(label, labels)
@@ -582,7 +591,14 @@ class ShowCodeTests(TestCase):
     def test_theming_page_shows_the_settings_but_not_the_secret_key(self):
         html = self.client.get(reverse("theming")).content.decode()
         text = _text(html)
-        for name in ("INSTALLED_APPS", "CRUD_VIEWS_EXTENDS", "CRISPY_TEMPLATE_PACK", "DJANGO_TABLES2_TEMPLATE"):
+        for name in (
+            "INSTALLED_APPS",
+            "ADMINLTE",
+            "CRUD_VIEWS_EXTENDS",
+            "CRUD_VIEWS_BREADCRUMB_PREFIX",
+            "CRISPY_TEMPLATE_PACK",
+            "DJANGO_TABLES2_TEMPLATE",
+        ):
             self.assertIn(name, text)
         self.assertNotIn("SECRET_KEY", html)
         self.assertNotIn(settings.SECRET_KEY, html)
@@ -591,7 +607,13 @@ class ShowCodeTests(TestCase):
     def test_theming_page_links_to_the_docs(self):
         html = self.client.get(reverse("theming")).content.decode()
         self.assertIn("https://django-crud-views.readthedocs.io/en/latest/reference/theme/", html)
-        self.assertIn("https://django-crud-views-coreui.readthedocs.io/en/latest/", html)
+        self.assertIn("https://django-crud-views-adminlte.readthedocs.io/en/latest/", html)
+
+    def test_theming_page_names_the_host_and_its_version(self):
+        from importlib.metadata import version
+
+        text = " ".join(_text(self.client.get(reverse("theming")).content.decode()).split())
+        self.assertIn(f"Not counted above: django_adminlte4, adminlte-django {version('adminlte-django')}", text)
 
     def test_theming_is_in_the_nav_for_every_user(self):
         User.objects.create_user("plain", password="s3cret-pass")
@@ -614,17 +636,30 @@ def _grant(user, *codenames):
 
 
 class NavigationTests(TestCase):
-    """The sidebar: the dashboard link, then one CoreUI nav-title per section with its links (no top bar)."""
+    """The sidebar (adminlte-django's menu, config/menu.py): the dashboard link, then one header per section."""
 
     def setUp(self):
         self.user = User.objects.create_user("navi")
         self.client.force_login(self.user)
 
     def sidebar(self, url):
-        html = self.client.get(url).content.decode()
-        return html[html.index('<ul class="sidebar-nav"') : html.index('<div class="sidebar-footer')]
+        return lxml_html.fromstring(self.client.get(url).content.decode()).cssselect("aside.app-sidebar .sidebar-menu")[
+            0
+        ]
 
-    def test_sections_are_nav_titles_with_their_links(self):
+    @staticmethod
+    def headers(menu):
+        return [li.text_content().strip() for li in menu.cssselect("li.nav-header")]
+
+    @staticmethod
+    def links(menu):
+        """{href: (text, classes of the link)} of the menu's links."""
+        return {
+            a.get("href"): (" ".join(a.text_content().split()), a.get("class").split())
+            for a in menu.cssselect("a.nav-link")
+        }
+
+    def test_sections_are_headers_with_their_links(self):
         _grant(
             self.user,
             "sales.view_customer",
@@ -633,58 +668,52 @@ class NavigationTests(TestCase):
             "catalog.view_category",
             "roastery.view_greenlot",
         )
-        sidebar = self.sidebar(reverse("dashboard:index"))
+        menu = self.sidebar(reverse("dashboard:index"))
         for section in ("Sales", "Catalog", "Roastery", "Developer"):
-            self.assertIn(f'<li class="nav-title">{section}</li>', sidebar)
-        self.assertRegex(
-            sidebar,
-            r'<a class="nav-link" href="/customer/">\s*<svg [^>]*class="icon nav-icon"[^>]*>.*?</svg>\s*Customers',
-        )
-        self.assertNotIn("dropdown", sidebar)
+            self.assertIn(section, self.headers(menu))
+        self.assertEqual(self.links(menu)["/customer/"][0], "Customers")
+        self.assertFalse(menu.cssselect(".nav-treeview"))  # flat: no submenus
 
     def test_every_link_has_an_icon(self):
-        sidebar = self.sidebar(reverse("dashboard:index"))
-        links = re.findall(r'<a class="nav-link[^"]*" href="[^"]+"[^>]*>(.*?)</a>', sidebar, re.S)
+        links = self.sidebar(reverse("dashboard:index")).cssselect("a.nav-link")
         self.assertTrue(links)
-        for body in links:
-            with self.subTest(link=body.strip()[-40:]):
-                self.assertRegex(body, r'<svg [^>]*class="icon nav-icon"')
+        for link in links:
+            with self.subTest(link=link.get("href")):
+                self.assertTrue(link.cssselect("i.nav-icon.bi"))
 
     def test_active_entry_is_marked(self):
         _grant(self.user, "sales.view_customer", "sales.view_order")
-        sidebar = self.sidebar(reverse("orders-list"))
-        self.assertRegex(
-            sidebar, r'<li class="nav-item">\s*<a class="nav-link active" href="/orders/" aria-current="page">'
-        )
-        self.assertRegex(sidebar, r'<a class="nav-link" href="/customer/">')
+        links = self.links(self.sidebar(reverse("orders-list")))
+        self.assertIn("active", links["/orders/"][1])
+        self.assertNotIn("active", links["/customer/"][1])
 
     def test_an_entry_is_active_on_its_child_pages(self):
         _grant(self.user, "sales.view_customer", "sales.view_order")
         from sales.models import Customer
 
         customer = Customer.objects.create(name="Navi Ltd")
-        sidebar = self.sidebar(reverse("order-list", kwargs={"customer_pk": customer.pk}))
-        self.assertRegex(sidebar, r'<a class="nav-link active" href="/orders/">')
+        links = self.links(self.sidebar(reverse("customer-detail", kwargs={"pk": customer.pk})))
+        self.assertIn("active", links["/customer/"][1])
 
-    def test_a_section_with_one_entry_keeps_its_title(self):
-        sidebar = self.sidebar(reverse("dashboard:index"))
-        self.assertIn('<li class="nav-title">Developer</li>', sidebar)
-        self.assertRegex(sidebar, r'<a class="nav-link" href="/theming/">')
+    def test_a_section_with_one_entry_keeps_its_header(self):
+        menu = self.sidebar(reverse("dashboard:index"))
+        self.assertIn("Developer", self.headers(menu))
+        self.assertIn("/theming/", self.links(menu))
 
     def test_sections_follow_the_permissions(self):
-        sidebar = self.sidebar(reverse("dashboard:index"))
-        for section in ("Sales", "Catalog", "Roastery", "Users"):
-            self.assertNotIn(f">{section}<", sidebar)
+        # tracker A14: a section header stays when every entry under it is hidden, so the links are asserted
+        menu = self.sidebar(reverse("dashboard:index"))
+        for href in ("/product/", "/category/", "/lot/", "/batch/", "/shipment/", "/users/"):
+            self.assertNotIn(href, self.links(menu))
         _grant(self.user, "sales.view_order")
-        sidebar = self.sidebar(reverse("dashboard:index"))
+        menu = self.sidebar(reverse("dashboard:index"))
         # Shipments live under Roastery and need only the order permission.
-        self.assertIn('<li class="nav-title">Roastery</li>', sidebar)
-        self.assertIn('href="/shipment/"', sidebar)
-        self.assertNotIn('href="/lot/"', sidebar)
+        self.assertIn("/shipment/", self.links(menu))
+        self.assertNotIn("/lot/", self.links(menu))
 
     def test_customers_open_for_account_managers_without_a_global_view(self):
         _grant(self.user, "sales.add_customer")
-        self.assertIn('href="/customer/"', self.sidebar(reverse("dashboard:index")))
+        self.assertIn("/customer/", self.links(self.sidebar(reverse("dashboard:index"))))
 
 
 class FaviconTests(TestCase):
@@ -815,10 +844,20 @@ class MigrationsTests(TestCase):
             self.fail(f"makemigrations --check found changes:\n{out.getvalue()}")
 
 
+def _theme_dir() -> Path:
+    """The theme package's directory, wherever it is installed (the example never imports the theme)."""
+    return Path(apps.get_app_config("crud_views_adminlte").path)
+
+
 def _package_sources():
-    """Every .py file of django_coreui and crud_views_coreui: the theme's own code, wherever it is installed."""
-    for package in (django_coreui, crud_views_coreui):
-        yield from Path(package.__file__).parent.rglob("*.py")
+    """Every .py file of crud_views_adminlte: the theme's own code."""
+    yield from _theme_dir().rglob("*.py")
+
+
+def _bootstrap_icon_names() -> set[str]:
+    """Every icon name of the Bootstrap Icons font adminlte-django ships (``.bi-<name>::before`` rules)."""
+    css = Path(finders.find("adminlte/dist/css/bootstrap-icons.min.css")).read_text()
+    return set(re.findall(r"\.bi-([a-z0-9-]+)::?before", css))
 
 
 class IconVocabularyTests(SimpleTestCase):
@@ -829,30 +868,31 @@ class IconVocabularyTests(SimpleTestCase):
         allowed = {root / "config" / "settings.py", root / "config" / "icons.py"}
         offenders = [
             str(path.relative_to(root))
-            for path in root.rglob("*.py")
+            for path in [*root.rglob("*.py"), *root.rglob("*.html")]
             if path not in allowed
-            and re.search(r"[\"']coreui:", path.read_text(encoding="utf-8"))
+            and "migrations" not in path.parts
+            and re.search(r"[\"']bi:|\bbi bi-", path.read_text(encoding="utf-8"))
             and not path.name.startswith("test")
         ]
         self.assertEqual(offenders, [])
 
-    def test_every_semantic_name_has_an_svg(self):
+    def test_every_semantic_name_has_an_icon(self):
         from config.icons import ACME_ICONS
         from crud_views.lib.icons import resolve_icon
-        from django_coreui.icons import ICONS
 
+        names = _bootstrap_icon_names()
         self.assertTrue(ACME_ICONS)
         for key in ACME_ICONS:
             library, name = resolve_icon(key)
-            self.assertEqual(library, "coreui", key)
-            self.assertIn(name, ICONS, key)
+            self.assertEqual(library, "bi", key)
+            self.assertIn(name, names, key)
 
     @staticmethod
     def _used_icons():
         """Every icon value the example's code names, as (where, value): views, property groups, workflow, models,
         courier events and the sidebar menu."""
         from catalog.models import Product
-        from config.templatetags.acme_nav import DASHBOARD, MENU
+        from config.menu import MENU
         from crud_views.lib.viewset import _REGISTRY
         from shipping.courier import EVENT_PLAN
 
@@ -893,21 +933,16 @@ class IconVocabularyTests(SimpleTestCase):
                         )
         for description, _location, _hours, icon in EVENT_PLAN:
             used.append((f"courier event {description}", icon))
-        # the sidebar renders these through {% icon %}: a semantic name or a native CoreUI name both work
-        from config.icons import ACME_ICONS
-        from django_coreui.icons import ICONS
-
-        for entry in (DASHBOARD, *(e for section in MENU for e in section.entries)):
-            icon = entry.icon
-            used.append(
-                (f"menu {entry.title}", icon if icon in ACME_ICONS else f"coreui:{icon}" if icon in ICONS else icon)
-            )
+        # the sidebar takes CSS classes (config.icons.icon_class): "bi bi-<name>" back to the library's name
+        for entry in MENU:
+            if entry.get("icon"):
+                used.append((f"menu {entry['text']}", "bi:" + entry["icon"].removeprefix("bi bi-")))
         return [(where, value) for where, value in used if value]
 
     def test_every_icon_used_in_code_resolves(self):
         from crud_views.lib.icons import resolve_icon
-        from django_coreui.icons import ICONS
 
+        names = _bootstrap_icon_names()
         used = self._used_icons()
         self.assertGreater(len(used), 40)
         self.assertTrue([w for w, _v in used if " transition " in w], "no workflow transition icon collected")
@@ -915,18 +950,21 @@ class IconVocabularyTests(SimpleTestCase):
             resolved = resolve_icon(value)
             self.assertIsNotNone(resolved, f"{where}: {value!r}")
             library, name = resolved
-            self.assertEqual(library, "coreui", f"{where}: {value!r} is not a table key (renders as a raw class)")
-            self.assertIn(name, ICONS, f"{where}: {value!r}")
+            self.assertEqual(library, "bi", f"{where}: {value!r} is not a table key (renders as a raw class)")
+            self.assertIn(name, names, f"{where}: {value!r}")
 
 
-#: Classes of the theme this demo was copied from that CoreUI 5 free does not have: the light badge colours (bg-*-lt),
-#: named colours outside CoreUI's theme colours, and components and helpers CoreUI has no class for.
-NON_COREUI_CLASS = re.compile(
+#: Classes left from django-crud-views-tabler and the CoreUI demo this one was copied from, which Bootstrap 5.3 and
+#: AdminLTE 4 do not have: light badges, components, avatars, ghost buttons, sidebar and header classes, and the
+#: CoreUI theme's own cv-coreui-* classes.
+NON_ADMINLTE_CLASS = re.compile(
     r"^(?:bg-\w+-lt|(?:bg|text|border)-(?:azure|blue|cyan|green|indigo|lime|orange|pink|purple|red|teal|yellow)"
-    r"|avatar-xs|badge-outline|btn-list|card-actions|card-lg|card-md|card-sm|card-status-\w+|card-table|"
+    r"|avatar(?:-\w+)?|badge-outline|btn-list|card-actions|card-lg|card-md|card-sm|card-status-\w+|card-table|"
     r"datagrid(?:-\w+)?|form-fieldset|form-footer|input-icon(?:-addon)?|list-group-header|modal-blur|"
     r"nav-link-icon|nav-link-title|navbar-vertical|page-body|page-wrapper|row-cards|row-deck|status-dot|step-item|"
-    r"steps(?:-\w+)?|subheader|table-transparent|table-vcenter|timeline(?:-\w+)?|w-1)$"
+    r"steps(?:-\w+)?|subheader|table-transparent|table-vcenter|timeline(?:-\w+)?|w-1"
+    r"|btn-ghost(?:-\w+)?|border-(?:top|bottom|start|end)-[1-5]|nav-title|sidebar-nav|sidebar-fixed|sidebar-dark"
+    r"|header-nav|header-toggler|progress-thin|page-header|page-title|page-subtitle|cv-coreui-[\w-]+)$"
 )
 
 
@@ -958,8 +996,8 @@ def _crawl(client, start):
     return pages
 
 
-class CoreuiPagesTests(TestCase):
-    """Every page of the demo, as alex (who may open everything): CoreUI markup only.
+class AdminltePagesTests(TestCase):
+    """Every page of the demo, as alex (who may open everything): AdminLTE / Bootstrap 5.3 markup only.
 
     The crawl starts at the dashboard, the theming, users and a manage page and the "Show code" fragment, and follows
     every link (sidebar, tables, buttons, tabs) to one page per view name, so it reaches a list, detail, update and
@@ -1019,26 +1057,26 @@ class CoreuiPagesTests(TestCase):
         self.assertEqual(missing, [])
         self.assertIn("showcaseitem-list", reached)
 
-    def test_every_page_has_no_data_bs(self):
-        # an attribute inside a tag; the theming page and the code panel show source text that names data-bs-
-        attribute = re.compile(r"<[^>]*\sdata-bs-")
+    def test_every_page_has_no_data_coreui(self):
+        # an attribute inside a tag; the theming page and the code panel show source text
+        attribute = re.compile(r"<[^>]*\sdata-coreui-")
         for url, (_status, html) in self.pages.items():
             with self.subTest(url=url):
                 self.assertIsNone(attribute.search(html))
 
-    def test_every_page_uses_coreui_classes_only(self):
+    def test_every_page_uses_adminlte_classes_only(self):
         for url, (_status, html) in self.pages.items():
             classes = {c for value in re.findall(r'\sclass="([^"]*)"', html) for c in value.split()}
             with self.subTest(url=url):
-                self.assertEqual(sorted(c for c in classes if NON_COREUI_CLASS.match(c)), [])
+                self.assertEqual(sorted(c for c in classes if NON_ADMINLTE_CLASS.match(c)), [])
 
-    def test_sign_in_page_has_no_data_bs_and_coreui_classes_only(self):
+    def test_sign_in_page_has_no_data_coreui_and_adminlte_classes_only(self):
         from django.test import Client
 
         html = Client().get(reverse("login")).content.decode()
-        self.assertIsNone(re.search(r"<[^>]*\sdata-bs-", html))
+        self.assertIsNone(re.search(r"<[^>]*\sdata-coreui-", html))
         classes = {c for value in re.findall(r'\sclass="([^"]*)"', html) for c in value.split()}
-        self.assertEqual(sorted(c for c in classes if NON_COREUI_CLASS.match(c)), [])
+        self.assertEqual(sorted(c for c in classes if NON_ADMINLTE_CLASS.match(c)), [])
 
 
 class OriginTests(SimpleTestCase):
@@ -1069,41 +1107,56 @@ class OriginTests(SimpleTestCase):
         self.assertEqual(offenders, [])
 
 
+class CoreuiOriginTests(SimpleTestCase):
+    """The example was copied from the CoreUI demo; nothing of CoreUI may be left but comments that credit it."""
+
+    #: a comment or docstring line that names where something came from
+    CREDIT = re.compile(r"\b(from|after|as in|like|replacing|sister|copied)\b.*\bCoreUI\b", re.I)
+
+    def test_no_coreui_left(self):
+        root = Path(settings.BASE_DIR)
+        offenders = []
+        for path in sorted(root.rglob("*")):
+            # migrations keep old help texts as history; this file names CoreUI's classes to assert they are gone
+            if (
+                path.suffix not in {".py", ".html", ".css", ".js"}
+                or "migrations" in path.parts
+                or path == Path(__file__).resolve()
+            ):
+                continue
+            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if "coreui" in line.lower() and not self.CREDIT.search(line):
+                    offenders.append(f"{path.relative_to(root)}:{number}: {line.strip()}")
+        self.assertEqual(offenders, [])
+
+
 class BrandTests(SimpleTestCase):
-    """acme.css: CoreUI compiles its primary into some rules, so the brand restates them (light and dark)."""
+    """acme.css: the compiled stylesheet keeps Bootstrap's blue in some rules; the brand restates them (A13)."""
+
+    def css(self):
+        return Path(finders.find("acme/acme.css")).read_text()
 
     def test_compiled_primary_rules_are_restated(self):
-        css = Path(finders.find("acme/acme.css")).read_text()
+        css = self.css()
         for selector in (
             ".btn-primary",
-            '[data-coreui-theme="dark"] .btn-primary',
             ".btn-outline-primary",
-            ".btn-ghost-primary",
-            ".border-top-primary",
+            '[data-bs-theme="dark"] .btn-outline-primary',
             ".form-control:focus",
             ".form-select:focus",
             ".form-check-input:focus",
-            ".form-switch .form-check-input:focus",
-            ".form-range:focus::-webkit-slider-thumb",
-            ".form-range::-webkit-slider-thumb:active",
+            ".form-check-input:checked",
             ".nav-link:focus-visible",
+            ".app-sidebar .nav-link.active",
         ):
             with self.subTest(selector=selector):
                 self.assertRegex(css, rf"(?m)^{re.escape(selector)}(,| \{{)")
-        for variable in (
-            "--cui-accordion-btn-focus-box-shadow",
-            "--cui-pagination-focus-box-shadow",
-            "--cui-btn-close-focus-shadow",
-            "--cui-sidebar-toggler-focus-shadow",
-        ):
-            with self.subTest(variable=variable):
-                self.assertIn(f"{variable}: 0 0 0 0.25rem var(--cui-focus-ring-color);", css)
-        self.assertNotIn("88, 86, 214", css)
-        self.assertNotIn("5856d6", css)
+        self.assertNotIn("13, 110, 253", css)  # Bootstrap's blue
+        self.assertNotIn("0d6efd", css.lower())
 
     def test_focus_ring_follows_the_colour_mode(self):
-        css = Path(finders.find("acme/acme.css")).read_text()
-        light = css[css.index(":root {") :]
-        dark = css[css.index('[data-coreui-theme="dark"] {') :]
-        self.assertIn("--cui-focus-ring-color: rgba(160, 82, 45, 0.25);", light[: light.index("}")])
-        self.assertIn("--cui-focus-ring-color: rgba(198, 151, 129, 0.25);", dark[: dark.index("}")])
+        css = self.css()
+        light = css[css.index(":root,") :]
+        dark = css[css.index('[data-bs-theme="dark"] {') :]
+        self.assertIn("--bs-focus-ring-color: rgba(160, 82, 45, 0.25);", light[: light.index("}")])
+        self.assertIn("--bs-focus-ring-color: rgba(198, 151, 129, 0.25);", dark[: dark.index("}")])

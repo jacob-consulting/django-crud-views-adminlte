@@ -67,11 +67,6 @@
   --bs-btn-disabled-color: #c69781;
 }
 
-/* the product cards' stripe (catalog/product_card.html) */
-.border-top-primary {
-  border-top-color: #a0522d !important;
-}
-
 /* Focus states: Bootstrap compiles its blue into the form controls' focus border and ring. */
 .form-control:focus,
 .form-select:focus,
@@ -84,6 +79,12 @@
   background-color: #a0522d;
   border-color: #a0522d;
 }
+
+/* the range slider's thumb (showcase form); one rule per engine, as an unknown pseudo-element drops a whole list */
+.form-range::-webkit-slider-thumb { background-color: #a0522d; }
+.form-range::-webkit-slider-thumb:active { background-color: #e3cbc0; }
+.form-range::-moz-range-thumb { background-color: #a0522d; }
+.form-range::-moz-range-thumb:active { background-color: #e3cbc0; }
 
 .nav-link:focus-visible {
   box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
@@ -126,3 +127,18 @@
 }
 .code-files .nav-link { padding: .25rem .625rem; font-size: .8125rem; font-family: var(--bs-font-monospace); }
 .code-block-full { max-height: none; }
+
+/* Initials avatars (customer table, dashboard, user list, shipment events): AdminLTE has no initials avatar, so a
+   round badge sized here, coloured by bg-<colour>-subtle text-<colour>-emphasis. */
+.acme-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: .8125rem;
+  line-height: 1;
+}
+.acme-avatar-md { width: 2.5rem; height: 2.5rem; font-size: 1rem; }

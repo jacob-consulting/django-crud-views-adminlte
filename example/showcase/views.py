@@ -2,13 +2,13 @@
 
 ``ShowcaseItemForm`` is the reason this app exists: its layout uses one crispy layout object
 per render path, so a single create page shows every branch of the crispy template pack
-side by side. Keep that coverage when editing — the table in
-``docs/crispy_coreui.md`` says which field covers which template.
+(crispy-bootstrap5) side by side. Keep that coverage when editing; ``showcase/tests.py`` names
+the template branch each field is there to exercise.
 """
 
 import django_filters
 import django_tables2 as tables
-from crispy_bootstrap5.bootstrap5 import FloatingField, Switch  # Task 6: showcase page rewrite
+from crispy_bootstrap5.bootstrap5 import FloatingField, Switch
 from crispy_forms.bootstrap import AppendedText, InlineCheckboxes, InlineRadios, PrependedText
 from crispy_forms.layout import Field, Fieldset, Layout, Row
 from crud_views.lib.breadcrumb import CrudViewBreadcrumbMixin
@@ -124,16 +124,17 @@ class ShowcaseItemForm(CrispyModelForm):
             # Select widget and crispy renders <input type="select">
             "shipping": forms.RadioSelect,
             "channels": forms.CheckboxSelectMultiple,
-            "rating": forms.NumberInput(attrs={"type": "range", "min": 1, "max": 5, "step": 1}),
+            # crispy-bootstrap5 adds form-control to every input; form-range and form-control-color are set here
+            "rating": forms.NumberInput(attrs={"type": "range", "min": 1, "max": 5, "step": 1, "class": "form-range"}),
             "released_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "published_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
             "restock_at": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
-            "accent_color": forms.TextInput(attrs={"type": "color"}),
+            "accent_color": forms.TextInput(attrs={"type": "color", "class": "form-control-color"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # the warehouse owns the SKU: shown, never posted (UneditableField renders it disabled)
+        # the warehouse owns the SKU: shown, never posted (a disabled field)
         self.fields["sku"].disabled = True
 
     def get_layout_fields(self):

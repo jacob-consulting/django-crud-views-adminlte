@@ -9,6 +9,7 @@ from django.urls import reverse
 from sales.models import CustomerSubscription, Order, OrderState
 from sales.services import run_subscriptions
 
+from . import markup
 from .test_customers import SalesTestCase
 
 TODAY = date(2026, 11, 4)
@@ -130,10 +131,10 @@ class SubscriptionViewTests(SubscriptionTestCase):
             with self.subTest(name=name):
                 response = self.client.get(reverse(name, kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(label_text(response, "page-title"), titles)
+                self.assertEqual(markup.headings(response.content.decode()), titles)
                 if name == "subscription-list":
                     self.assertRegex(
-                        response.content.decode(), r'aria-current="true">(?:<svg.*?</svg>)?\s*Subscriptions</a>'
+                        response.content.decode(), r'aria-current="true">(?:<i [^>]*></i>)?\s*Subscriptions</a>'
                     )
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
@@ -150,7 +151,7 @@ class SubscriptionViewTests(SubscriptionTestCase):
                 response = self.client.get(reverse(f"subscription-{action}", kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(
-                    label_text(response, "page-title"), [str(self.mine), "Subscription"]
+                    markup.headings(response.content.decode()), [str(self.mine), "Subscription"]
                 )  # owner h1, view title
                 breadcrumbs = label_text(response, "breadcrumb-item")
                 self.assertIn("Subscriptions", breadcrumbs)
@@ -168,7 +169,7 @@ class SubscriptionViewTests(SubscriptionTestCase):
         self.login()
         response = self.client.get(reverse("subscriptions-run"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(label_text(response, "page-title"), ["Run subscriptions"])
+        self.assertEqual(markup.headings(response.content.decode()), ["Run subscriptions"])
 
     def test_run_view_flashes_count(self):
         self.subscribe(self.mine, days=-1)

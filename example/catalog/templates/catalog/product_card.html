@@ -6,7 +6,7 @@ flavor notes, price and stock in the footer, the card actions below. Extends the
 blocks, #325): the stripe goes in card_root, the badge row in card_header, the link in card_title (the heading's
 level and class come from the card:title class key), and the price footer sits before the actions footer.
 {% endcomment %}
-{% block card_root %}<div class="border-top border-top-3 border-top-{{ object.card_color }} rounded-top" data-product-card="{{ object.pk }}"></div>{% endblock card_root %}
+{% block card_root %}<div class="border-top border-3 border-{{ object.card_color }} rounded-top" data-product-card="{{ object.pk }}"></div>{% endblock card_root %}
 {% block card_header %}
     <div class="d-flex mb-2">
       <span class="badge d-inline-flex align-items-center gap-1 bg-{{ object.card_color }}-subtle text-{{ object.card_color }}-emphasis">{% cv_icon object.card_icon %}{{ object.type_label }}</span>

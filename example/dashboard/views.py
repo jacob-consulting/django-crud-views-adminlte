@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db.models import F, Min, Q, Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.formats import number_format
 from django.views.decorators.http import require_POST
 from roastery.models import CuppingSession, GreenLot
 from sales.models import CustomerSubscription, Order, OrderState
@@ -87,6 +88,8 @@ def index(request):
     today = timezone.localdate()
     context = _sales_stats(request.user, today)
     context["today"] = today
+    # the info boxes take their number as one string
+    context["revenue_title"] = f"€ {number_format(context['revenue_30d'], 2, force_grouping=True)}"
     context["revenue_chart"] = {
         "labels": [label for label, _ in context["revenue_by_week"]],
         "values": [float(v) for _, v in context["revenue_by_week"]],
@@ -96,6 +99,8 @@ def index(request):
         on_hand = stock["on_hand"] or Decimal("0")
         context["green_stock_kg"] = on_hand
         context["green_stock_pct"] = round(on_hand / stock["purchased"] * 100) if stock["purchased"] else 0
+        context["green_stock_title"] = f"{number_format(on_hand, 0, force_grouping=True)} kg"
+        context["green_stock_text"] = f"{context['green_stock_pct']}% still on hand"
         context["recent_cuppings"] = list(
             CuppingSession.objects.select_related("lot__origin").prefetch_related("scores")[:5]
         )

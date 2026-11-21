@@ -1,18 +1,13 @@
 """The Acme sidebar: adminlte-django's ``ADMINLTE["menu"]``, replacing the CoreUI demo's ``acme_nav`` tag library.
 
 ``viewset`` entries are resolved and permission-gated by the theme's filters (``crud_views_adminlte.menu``); ``route``
-entries with ``can`` by the host's own. Icons are Bootstrap Icons, named through ``config.icons``.
+entries with ``can`` by the host's own. Icons are named through ``config.icons``.
 """
 
-from config.icons import ACME_ICONS
-
-
-def _icon(key: str) -> str:
-    return f"bi bi-{ACME_ICONS[key]}"
-
+from config.icons import icon_class as _icon
 
 MENU: list[dict] = [
-    {"text": "Dashboard", "route": "dashboard:index", "icon": "bi bi-speedometer2"},
+    {"text": "Dashboard", "route": "dashboard:index", "icon": _icon("dashboard")},
     {"header": "Sales"},
     # Account managers hold only `add_customer` globally (their view rights are Guardian object grants), so the
     # customer list's own access check decides who sees this entry.
@@ -28,8 +23,8 @@ MENU: list[dict] = [
     # the shipment list checks `sales.view_order` and scopes the rows to the user's customers
     {"viewset": "shipment", "text": "Shipments", "icon": _icon("shipment")},
     {"header": "Developer"},
-    {"viewset": "showcaseitem", "text": "Form showcase", "icon": "bi bi-grid"},
-    {"text": "How this is themed", "route": "theming", "icon": "bi bi-brush"},
+    {"viewset": "showcaseitem", "text": "Form showcase", "icon": _icon("showcase")},
+    {"text": "How this is themed", "route": "theming", "icon": _icon("theming")},
     {"header": "Users"},
-    {"text": "Users", "route": "dashboard:users", "icon": "bi bi-people", "can": "auth.view_user"},
+    {"text": "Users", "route": "dashboard:users", "icon": _icon("users"), "can": "auth.view_user"},
 ]

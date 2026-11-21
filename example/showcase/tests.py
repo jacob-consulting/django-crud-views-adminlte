@@ -50,7 +50,7 @@ class ShowcaseItemFormCoverageTests(TestCase):
         self.assertIn('name="tags"', html)  # checkboxselectmultiple_inline.html
         self.assertIn('name="is_featured"', html)  # NullBooleanSelect
         self.assertIn('name="price_min"', html)
-        # InlineCheckboxes legend ("Tags"): crispy-bootstrap5's own fs-6 form-label, kept by the CoreUI pack
+        # InlineCheckboxes legend ("Tags"): crispy-bootstrap5's own fs-6 form-label
         legend = self.find(r"<legend[^>]*>\s*Tags", html)
         self.assertIn("fs-6", legend)
         self.assertIn("form-label", legend)
@@ -86,14 +86,15 @@ class ShowcaseItemFormCoverageTests(TestCase):
         self.assertIn('class="input-group-text">€</span>', html)
         self.assertIn("months</span>", html)
         self.assertIn("form-floating", html)  # floating_field.html
-        # UneditableField: Bootstrap's plaintext class, and crispy's Bootstrap-2 era class must be gone
-        self.assertIn("form-control-plaintext", html)
+        # the SKU: shown as a disabled control, never posted (crispy's Bootstrap-2 era uneditable-input is not used)
+        sku = self.find(r'<input type="text" name="sku"[^>]*>', html)
+        self.assertIn("disabled", sku)
+        self.assertIn("form-control", sku)
         self.assertNotIn("uneditable-input", html)
-        self.assertIn('name="sku"', html)
         # fieldset.html — Django's use_fieldset emits <fieldset> for radio/checkbox fields too,
         # so pin the legend of the Fieldset layout object itself
         self.assertIn("<legend>Internal</legend>", html)
-        # crispy-bootstrap5's bare <fieldset>: CoreUI has no tinted fieldset block
+        # crispy-bootstrap5's bare <fieldset>; AdminLTE draws its border and legend
         fieldset = self.find(r"<fieldset[^>]*>\s*<legend>Internal</legend>", html)
         self.assertNotIn("form-fieldset", fieldset)
 
@@ -101,9 +102,9 @@ class ShowcaseItemFormCoverageTests(TestCase):
         html = self.create_page()
         range_input = self.find(r'<input type="range"[^>]*>', html)
         color_input = self.find(r'<input type="color"[^>]*>', html)
-        # .form-range resets appearance/background-color, which .form-control would fight
+        # .form-range from the widget's attrs; crispy-bootstrap5 appends .form-control to every input, and
+        # .form-range, later in Bootstrap's CSS, wins the properties both set (appearance, padding, background)
         self.assertIn("form-range", range_input)
-        self.assertNotIn("form-control", range_input)
         # .form-control-color only sets size/padding and relies on .form-control for border and radius
         self.assertIn("form-control-color", color_input)
         classes = re.search(r'class="([^"]*)"', color_input).group(1).split()
@@ -123,11 +124,8 @@ class ShowcaseItemFormCoverageTests(TestCase):
                 self.assertIn("fs-6", legend)
                 self.assertIn("form-label", legend)
 
-    def test_form_and_detail_pages_use_no_bootstrap5_template(self):
-        # crispy_bootstrap5 is not in INSTALLED_APPS (spec goal 7), so a stray bootstrap5/ reference raises
-        # TemplateDoesNotExist; this also asserts no such template shows up in the rendered template list.
-        # Context: django-crud-views#217 removed crud_views/detail/, the last templates in the package with
-        # hardcoded bootstrap5/ includes, so this is now a regression guard for the pack and the theme.
+    def test_form_and_detail_pages_render_the_bootstrap5_pack(self):
+        # AdminLTE is Bootstrap 5.3, so the theme uses crispy-bootstrap5 as it is: its templates, and no other pack's
         rendered = set()
         for url, query in [
             (reverse("showcaseitem-create"), {}),
@@ -141,10 +139,10 @@ class ShowcaseItemFormCoverageTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 names = [t.name for t in response.templates if t.name]
                 rendered.update(names)
-                self.assertEqual([n for n in names if n.startswith("bootstrap5/")], [])
-        # not vacuous: the pack's templates really were the ones rendered, including the filter's inline checkboxes
-        self.assertIn("crispy_coreui/field.html", rendered)
-        self.assertIn("crispy_coreui/layout/checkboxselectmultiple_inline.html", rendered)
+                self.assertEqual([n for n in names if n.startswith("bootstrap4/")], [])
+        # the pack's templates really were the ones rendered, including the filter's inline checkboxes
+        self.assertIn("bootstrap5/field.html", rendered)
+        self.assertIn("bootstrap5/layout/checkboxselectmultiple_inline.html", rendered)
 
     def test_native_input_types_reach_the_browser(self):
         html = self.create_page()

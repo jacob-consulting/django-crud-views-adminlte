@@ -1,21 +1,21 @@
-{% load coreui %}
+{% load crud_views %}
 {# The "Show code" panel's content, fetched from /_code/<app_label>/ (config/views.py:code_panel) into the shell #}
 {# (code_panel_shell.html) when the panel first opens. static/acme/code-panel.js selects the page's own module. #}
 <div class="card-header d-flex flex-wrap align-items-start gap-2">
   <div class="me-auto">
-    <h3 class="h6 mb-1 d-flex align-items-center gap-1">{% icon "cil-code" %}This page’s code</h3>
+    <h3 class="h6 mb-1 d-flex align-items-center gap-1">{% cv_icon "code" %}This page’s code</h3>
     <p class="small text-body-secondary mb-0">
       The <code>{{ app_label }}</code> app: {{ files|length }} file{{ files|length|pluralize }}, {{ total_lines }} lines.
-      {% if imports_theme %}It imports layout objects from <code>django_coreui</code>’s crispy pack, which this form showcase exists to exercise.{% else %}Plain django-crud-views: not one line refers to CoreUI or the theme.{% endif %}
+      {% if imports_theme %}It names the theme or adminlte-django.{% else %}Plain django-crud-views: not one line refers to AdminLTE or the theme.{% endif %}
     </p>
   </div>
-  <a href="{% url 'theming' %}" class="btn btn-sm btn-outline-secondary">{% icon "cil-brush" "me-1" %}How this is themed</a>
+  <a href="{% url 'theming' %}" class="btn btn-sm btn-outline-secondary">{% cv_icon "theming" "me-1" %}How this is themed</a>
 </div>
 <div class="card-body border-bottom py-2">
   <ul class="nav nav-pills code-files flex-wrap gap-1" role="tablist">
     {% for file in files %}
     <li class="nav-item" role="presentation">
-      <a class="nav-link{% if forloop.first %} active{% endif %}" href="#code-file-{{ forloop.counter }}" data-coreui-toggle="pill" data-code-file="{{ file.source.label }}" role="tab" aria-controls="code-file-{{ forloop.counter }}" aria-selected="{{ forloop.first|yesno:'true,false' }}">{{ file.short }}</a>
+      <a class="nav-link{% if forloop.first %} active{% endif %}" href="#code-file-{{ forloop.counter }}" data-bs-toggle="pill" data-code-file="{{ file.source.label }}" role="tab" aria-controls="code-file-{{ forloop.counter }}" aria-selected="{{ forloop.first|yesno:'true,false' }}">{{ file.short }}</a>
     </li>
     {% endfor %}
   </ul>

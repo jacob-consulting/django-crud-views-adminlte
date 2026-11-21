@@ -8,3 +8,10 @@
   color: #fff;
   background-color: var(--bs-blue);
 }
+
+/* tracker A18: AdminLTE gives .card-header a clearfix (::after, display block) for its floated .card-title and
+   .card-tools. In a flex header (upstream's manage cards: d-flex justify-content-between) that pseudo-element is a
+   third flex item, so the header's last item lands in the middle. */
+.card-header.d-flex::after {
+  display: none;
+}

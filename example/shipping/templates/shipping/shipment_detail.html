@@ -27,7 +27,7 @@
       <ul class="list-group list-group-flush">
         {% for event in events %}
         <li class="list-group-item d-flex gap-3 py-3" data-shipment-event>
-          <span class="avatar avatar-md flex-shrink-0 {% if forloop.first and object.is_delivered %}bg-success-subtle text-success-emphasis{% else %}bg-body-secondary text-body-secondary{% endif %}">{% cv_icon event.icon %}</span>
+          <span class="acme-avatar acme-avatar-md flex-shrink-0 {% if forloop.first and object.is_delivered %}bg-success-subtle text-success-emphasis{% else %}bg-body-secondary text-body-secondary{% endif %}">{% cv_icon event.icon %}</span>
           <div class="flex-fill">
             <div class="d-flex flex-wrap column-gap-3">
               <h4 class="h6 mb-1">{{ event.description }}</h4>

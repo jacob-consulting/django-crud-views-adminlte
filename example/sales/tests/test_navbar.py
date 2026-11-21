@@ -9,6 +9,7 @@ from django.utils.html import strip_tags
 
 from sales.models import Address, Customer, CustomerSubscription
 
+from . import markup
 from .test_orders import OrderTestCase
 from .test_subscriptions import TODAY
 
@@ -61,7 +62,7 @@ def tabs_end(html):
 
 
 def header(html):
-    return html[html.index('class="page-header') : html.index("<main>")]
+    return markup.header(html)
 
 
 def active(bar):
@@ -139,10 +140,11 @@ class CustomerNavbarTests(OrderTestCase):
         self.login()
         fixtures = self.build(self.mine)
         html = self.client.get(reverse("order-packing_slip", kwargs=fixtures["order"])).content.decode()
-        start = html.index('class="page-header mb-4 d-print-none')
-        self.assertLess(start, html.index('class="cv-coreui-owner'))
-        self.assertLess(html.index('class="cv-coreui-owner'), html.index("<main>"))
-        self.assertIn('class="cv-coreui-navbar d-print-none', html)
+        # the packing slip hides the whole page header in print; the tabs are hidden in print on every page
+        start = html.index('<div class="d-print-none">')
+        self.assertLess(start, html.index('<div class="app-content-header'))
+        self.assertLess(html.index('<div class="app-content-header'), html.index('class="cv-adminlte-owner'))
+        self.assertIn('class="cv-adminlte-navbar d-print-none', html)
 
     def test_detail_buttons_sit_below_the_tabs(self):
         self.login()
@@ -170,7 +172,7 @@ class CustomerNavbarTests(OrderTestCase):
                 kwargs = {"pk": self.mine.pk} if name == "customer-detail" else fixtures["customer"]
                 page = header(self.client.get(reverse(name, kwargs=kwargs)).content.decode())
                 self.assertNotIn("<h2", page)
-                self.assertIn("page-subtitle", page)
+                self.assertIn(markup.SUBTITLE, page)
                 self.assertGreater(page.index('href="#code-panel"'), tabs_end(page))
 
     def test_heading_that_says_more_than_the_tab_stays(self):
@@ -209,7 +211,7 @@ class CustomerNavbarTests(OrderTestCase):
         owner = html[html.index("<h1") : tabs_end(html)]
         self.assertEqual(owner.count("&lt;b&gt;A &amp; B&lt;/b&gt;"), 2)  # the page's h1 and the landmark's label
         title = html[html.index("<title>") : html.index("</title>")]
-        self.assertIn(" · &lt;b&gt;A &amp; B&lt;/b&gt; · ", title)
+        self.assertIn("Details · &lt;b&gt;A &amp; B&lt;/b&gt;", title)
         self.assertNotIn("<b>A", html)
 
     def test_empty_section_stays_visible(self):

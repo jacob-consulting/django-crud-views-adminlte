@@ -1,26 +1,27 @@
-{% extends "django_coreui/layouts/app.html" %}
-{% load coreui %}
+{% extends "project/page.html" %}
+{% load crud_views %}
 {# "How this is themed" (config/views.py:theming): every number on this page is counted from the files at render time. #}
 {% block title %}How this is themed{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% url 'pygments-css' %}" />{% endblock %}
-{% block pretitle %}Developer{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% url 'pygments-css' %}" />{% endblock %}
 {% block page_title %}How this is themed{% endblock %}
-{% block actions %}
-<a href="{{ theme_guide_url }}" class="btn btn-outline-secondary" target="_blank" rel="noopener">{% icon "cil-book" "me-1" %}Theme guide (django-crud-views)</a>
-{# cil-code: the brand icons (cib-*) are a separate @coreui/icons set that scripts/vendor_icons.py does not read. #}
-<a href="{{ theme_doc_url }}" class="btn btn-outline-secondary" target="_blank" rel="noopener">{% icon "cil-code" "me-1" %}django-crud-views-coreui docs</a>
-{% endblock %}
 {% block content %}
+<div class="d-flex flex-wrap justify-content-end gap-2 mb-3">
+  <a href="{{ theme_guide_url }}" class="btn btn-outline-secondary" target="_blank" rel="noopener">{% cv_icon "docs" "me-1" %}Theme guide (django-crud-views)</a>
+  <a href="{{ theme_doc_url }}" class="btn btn-outline-secondary" target="_blank" rel="noopener">{% cv_icon "code" "me-1" %}django-crud-views-adminlte docs</a>
+</div>
 <div class="card mb-4">
   <div class="card-body p-4">
     <h2 class="h3 mb-3">The whole theme is {{ total_files }} files, {{ total_lines }} lines. <span class="text-primary">Your app code is unchanged.</span></h2>
     <p class="text-body-secondary fs-5 mb-4" style="max-width: 60rem">
-      The theme is one app, <code>crud_views_coreui</code>, listed before <code>crud_views</code> in
-      <code>INSTALLED_APPS</code>. Its templates shadow django-crud-views’ stock Bootstrap&nbsp;5 templates of the same
-      name, and whatever it does not override falls through. Button classes, icons and the JavaScript adapters are
-      registered through upstream hooks in <code>apps.py</code>; no crud_views code is patched or subclassed. The
-      <code>sales</code>, <code>catalog</code>, <code>roastery</code> and <code>shipping</code> apps never import it:
-      open <span class="text-nowrap">{% icon "cil-code" "me-1" %}Show code</span> on any of their pages to check.
+      The theme is one app, <code>crud_views_adminlte</code>, listed before <code>crud_views</code> in
+      <code>INSTALLED_APPS</code>. Its page template puts every crud_views page into the page of
+      <a href="{{ host.url }}" target="_blank" rel="noopener">{{ host.name }}</a> {{ host.version }}, the AdminLTE&nbsp;4
+      shell that also renders the dashboard, the user list and this page; whatever it does not override falls through
+      to django-crud-views’ stock Bootstrap&nbsp;5 templates. Button classes and icons are registered through upstream
+      hooks in <code>apps.py</code>, and <code>menu.py</code> lets the shell’s sidebar menu name ViewSets; no
+      crud_views or adminlte-django code is patched or subclassed. The <code>sales</code>, <code>catalog</code>,
+      <code>roastery</code> and <code>shipping</code> apps never import it: open
+      <span class="text-nowrap">{% cv_icon "code" "me-1" %}Show code</span> on any of their pages to check.
     </p>
     <div class="row g-3">
       {% for group in groups %}
@@ -41,7 +42,7 @@
 <div class="row g-4">
   <div class="col-lg-4">
     <div class="card sticky-lg-top" style="top: 5.5rem; z-index: 1">
-      <div class="card-header d-flex align-items-center"><h3 class="h6 mb-0 d-flex align-items-center gap-1">{% icon "cil-file" %}Files</h3><span class="ms-auto text-body-secondary small">{{ total_files }} files · {{ total_lines }} lines</span></div>
+      <div class="card-header d-flex align-items-center"><h3 class="h6 mb-0 d-flex align-items-center gap-1">{% cv_icon "file" %}Files</h3><span class="ms-auto text-body-secondary small">{{ total_files }} files · {{ total_lines }} lines</span></div>
       <div class="list-group list-group-flush">
         {% for group in groups %}
         <div class="list-group-item bg-body-tertiary small text-body-secondary text-uppercase fw-semibold py-1">{{ group.title }}</div>
@@ -73,26 +74,15 @@
     {% endfor %}
 
     <div class="card mt-4">
-      <div class="card-header d-flex flex-wrap align-items-start gap-2">
-        <div class="me-auto">
-          <h3 class="h6 mb-1">Not counted above: <code>django_coreui</code>, {{ shell_files|length }} files, {{ shell_lines }} lines</h3>
-          <p class="small text-body-secondary mb-0">
-            The theme builds on this repo’s second package, the CoreUI page shell, icon paths and the crispy-forms
-            template pack; it knows nothing about django-crud-views and themes any Django project, so it plays the part
-            that Bootstrap and crispy-bootstrap5 play for the stock theme and is listed here on its own.
-          </p>
-        </div>
-        <a class="btn btn-sm btn-outline-secondary" data-coreui-toggle="collapse" href="#shell-files" role="button" aria-expanded="false" aria-controls="shell-files">Show files</a>
-      </div>
-      <div class="collapse" id="shell-files">
-        <div class="list-group list-group-flush">
-          {% for file in shell_files %}
-          <div class="list-group-item d-flex justify-content-between align-items-center py-2">
-            <code class="text-body bg-transparent p-0">{{ file.label }}</code>
-            <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ file.lines }}</span>
-          </div>
-          {% endfor %}
-        </div>
+      <div class="card-body">
+        <h3 class="h6 mb-1">Not counted above: <code>{{ host.module }}</code>, {{ host.name }} {{ host.version }}</h3>
+        <p class="small text-body-secondary mb-0">
+          The page shell (layout, sidebar menu, navbar, colour modes, login page, the dashboard’s info boxes and cards)
+          is the third-party package <a href="{{ host.url }}" target="_blank" rel="noopener">{{ host.name }}</a>,
+          installed from PyPI; it knows nothing about django-crud-views and themes any Django project, so it plays the
+          part that Bootstrap plays for the stock theme. Its chart component needs its Vite asset pipeline, so the
+          dashboard’s revenue chart stays on ApexCharts.
+        </p>
       </div>
     </div>
   </div>

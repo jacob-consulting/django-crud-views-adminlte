@@ -105,7 +105,7 @@ class CustomerTable(Table):
     def render_name(self, record):
         return format_html(
             '<div class="d-flex align-items-center gap-2">'
-            '<span class="avatar avatar-sm bg-{0}-subtle text-{0}-emphasis fw-semibold">{1}</span>'
+            '<span class="acme-avatar bg-{0}-subtle text-{0}-emphasis fw-semibold">{1}</span>'
             "<span>{2}</span></div>",
             record.avatar_color,
             record.initials,

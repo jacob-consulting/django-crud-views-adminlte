@@ -12,7 +12,7 @@ from django.utils import timezone
 from django_fsm import FSMField, TransitionNotAllowed, transition
 
 CENT = Decimal("0.01")
-# CoreUI's theme colours, as the shell's avatar_color filter uses them (bg-<colour>-subtle text-<colour>-emphasis)
+# Bootstrap's theme colours for the initials avatars (bg-<colour>-subtle text-<colour>-emphasis, acme.css .acme-avatar)
 AVATAR_COLORS = ["primary", "success", "info", "warning", "danger", "secondary"]
 
 

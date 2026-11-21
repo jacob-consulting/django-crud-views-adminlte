@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import NoReverseMatch, get_resolver, reverse
+from lxml import html as lxml_html
 
 User = get_user_model()
 
@@ -69,10 +70,10 @@ class PagesTestCase(TestCase):
         self.assertTrue(self.client.login(username=username, password="demo"))
 
     def sidebar_links(self, html):
-        sidebar = html[html.index('class="sidebar-wrapper"') : html.index("</aside>")]
-        return re.findall(r'<a href="([^"#][^"]*)"[^>]*class="nav-link', sidebar) or re.findall(
-            r'<a [^>]*class="nav-link[^"]*"[^>]*href="([^"#][^"]*)"', sidebar
-        )
+        """The hrefs of the sidebar menu's links, in menu order (no "#" placeholders)."""
+        root = lxml_html.fromstring(html)
+        links = [a.get("href", "") for a in root.cssselect("aside.app-sidebar .sidebar-menu a.nav-link")]
+        return [href for href in links if href and not href.startswith("#")]
 
 
 class EveryPageTests(PagesTestCase):
@@ -161,10 +162,14 @@ class MenuPerRoleTests(PagesTestCase):
                 with self.subTest(user=username, url=url):
                     self.assertEqual(self.client.get(url).status_code, 200)
 
-    def test_a_user_without_permissions_sees_no_crud_entries(self):
+    def test_a_user_without_permissions_still_sees_customers_c7(self):
+        """Tracker C7: a user without permissions sees no CRUD entry except Customers.
+
+        The Customers entry (a Guardian ViewSet) stays for every signed-in user, because its list's access check
+        cannot see object grants without an object; the list is open to them and shows only the objects they hold
+        grants for. Once C7 is fixed upstream, this test changes to expect no CRUD entry at all.
+        """
         User.objects.create_user("nobody", password="demo")
         links = self.links("nobody")
-        # tracker C7: the Customers entry (a Guardian ViewSet) stays for everyone, its list is open to any signed-in
-        # user and shows only the objects they hold grants for
         shown = [u for u in links if u.startswith(self.CRUD + self.OWNER_ONLY)]
         self.assertEqual(shown, ["/customer/"])

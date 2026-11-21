@@ -5,34 +5,37 @@ from django.shortcuts import render
 from django.utils.html import strip_tags
 from django.views.decorators.cache import cache_control
 
-from .showcode import collect_shell_files, collect_sources_for_app, collect_theme_sources, pygments_css
+from .showcode import collect_sources_for_app, collect_theme_sources, host_package, pygments_css
 
-THEME_PACKAGES = ("django_coreui", "crud_views_coreui")
+#: names whose appearance in an app's code would mean the app knows the theme
+THEME_PACKAGES = ("django_adminlte4", "crud_views_adminlte")
 
 THEME_GUIDE_URL = "https://django-crud-views.readthedocs.io/en/latest/reference/theme/"
-THEME_DOC_URL = "https://django-crud-views-coreui.readthedocs.io/en/latest/"
+THEME_DOC_URL = "https://django-crud-views-adminlte.readthedocs.io/en/latest/"
 
 #: how the theme's files are grouped on the page, in this order
 GROUPS = (
     (
         "python",
         "Registration",
-        "apps.py registers button classes, label modes and icons; checks.py flags missing icons.",
+        "apps.py registers button classes and icons, menu.py the sidebar's ViewSet entries, checks.py their checks.",
     ),
     (
         "templates",
         "Templates",
-        "Page base and layout overrides. They shadow the stock templates; none renders a button.",
+        "The page base that maps crud_views onto adminlte-django's page, and the breadcrumb items. "
+        "None renders a button.",
     ),
     (
         "static",
-        "CSS and JavaScript",
-        "A few CSS fixes and the adapters that hand crud_views CoreUI's Bootstrap components.",
+        "CSS",
+        "The theme's few CSS rules, each logged in the upstream tracker.",
     ),
     (
         "settings",
         "Settings",
-        "The settings.py lines that switch the theme on; INSTALLED_APPS is shown, and counted, whole for its order.",
+        "The settings.py lines that install adminlte-django and switch the theme on; INSTALLED_APPS is shown, and "
+        "counted, whole for its order.",
     ),
 )
 
@@ -48,7 +51,11 @@ def _group(label: str) -> str:
 
 
 def _short(label: str) -> str:
-    for prefix in ("crud_views_coreui/templates/", "crud_views_coreui/static/crud_views_coreui/", "crud_views_coreui/"):
+    for prefix in (
+        "crud_views_adminlte/templates/",
+        "crud_views_adminlte/static/crud_views_adminlte/",
+        "crud_views_adminlte/",
+    ):
         if label.startswith(prefix):
             return label.removeprefix(prefix)
     return label
@@ -71,7 +78,6 @@ def theming(request):
                 "short": [(s, _short(s.label)) for s in members],
             }
         )
-    shell = collect_shell_files()
     return render(
         request,
         "project/theming.html",
@@ -80,8 +86,7 @@ def theming(request):
             "groups": groups,
             "total_files": len(sources),
             "total_lines": sum(s.lines for s in sources),
-            "shell_files": shell,
-            "shell_lines": sum(f.lines for f in shell),
+            "host": host_package(),
             "theme_guide_url": THEME_GUIDE_URL,
             "theme_doc_url": THEME_DOC_URL,
         },

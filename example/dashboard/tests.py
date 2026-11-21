@@ -692,8 +692,10 @@ class NavigationTests(TestCase):
         from sales.models import Customer
 
         customer = Customer.objects.create(name="Navi Ltd")
-        links = self.links(self.sidebar(reverse("customer-detail", kwargs={"pk": customer.pk})))
+        # the order list nested under a customer belongs to the customer's entry, not the top-level Orders ViewSet
+        links = self.links(self.sidebar(reverse("order-list", kwargs={"customer_pk": customer.pk})))
         self.assertIn("active", links["/customer/"][1])
+        self.assertNotIn("active", links["/orders/"][1])
 
     def test_a_section_with_one_entry_keeps_its_header(self):
         menu = self.sidebar(reverse("dashboard:index"))
@@ -1110,8 +1112,9 @@ class OriginTests(SimpleTestCase):
 class CoreuiOriginTests(SimpleTestCase):
     """The example was copied from the CoreUI demo; nothing of CoreUI may be left but comments that credit it."""
 
-    #: a comment or docstring line that names where something came from
-    CREDIT = re.compile(r"\b(from|after|as in|like|replacing|sister|copied)\b.*\bCoreUI\b", re.I)
+    #: a line that credits the demo this one was copied from ("copied from / after / replacing the CoreUI demo"),
+    #: not one that describes something as CoreUI's ("styled like CoreUI's sidebar")
+    CREDIT = re.compile(r"\b(copied from|from|after|replacing)\s+the CoreUI demo\b")
 
     def test_no_coreui_left(self):
         root = Path(settings.BASE_DIR)

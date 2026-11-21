@@ -176,6 +176,37 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   `.table-responsive` on the stock wrapper as `view_manage.html` already does for its tables.
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
+## C10. The bulk toolbar shows every action to every viewer
+
+- Status: confirmed · Severity: annoyance
+- Symptom: the bulk toolbar renders every action in `cv_bulk_actions` whatever the viewer may do; permission is only
+  checked when the form is submitted. In the demo, Kim (Roasters: `roast_order`, no `change_order`) sees
+  "Cancel orders" on `/orders/`, and submitting it answers 403. Upstream documents this as deliberate
+  (`docs/reference/bulk_actions.md:90`: "The toolbar renders every configured action without scanning the page for
+  eligible objects or issuing bulk-permission queries; admission happens on submission.").
+- Minimal repro: `example/sales/views/orders.py` `AllOrdersListView` (`cv_bulk_actions = ("bulk_roast",
+  "bulk_cancel")`); log in as `kim`, open `/orders/`, select an order, press "Cancel orders": 403
+  (`test_roasters_may_not_cancel` in `example/sales/tests/test_bulk.py`).
+- Workaround: none.
+- Proposed upstream fix: filter the toolbar's actions by each destination's model-level permission
+  (`cv_has_access(user)` without object, one check per action, no per-row queries), or an opt-in
+  `cv_bulk_actions_filter_by_permission`; a toolbar with no action left renders no checkboxes.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
+## C11. No danger variant for destructive bulk actions
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: every bulk toolbar button is a form submit styled by `form:submit`, so a destructive action ("Cancel
+  orders", upstream's own bulk Delete) looks the same as a harmless one ("Mark roasted"); both are the primary button.
+  Single-record actions have variants (`list:danger`, `context:danger`), bulk actions have none. Upstream documents
+  this as deliberate (`docs/reference/bulk_actions.md:415`: "These are form submit buttons styled by `form:submit`";
+  `:421`: "There is no per-action map and no variant.").
+- Minimal repro: the demo's `/orders/` toolbar: "Mark roasted" and "Cancel orders" are both `btn btn-primary`.
+- Workaround: none.
+- Proposed upstream fix: honour the destination's `cv_action_variant` in the toolbar with per-variant class keys
+  (`bulk:primary`, `bulk:danger`, ... as for `list:*` / `context:*`), or a per-action class key.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
 ## adminlte-django (A)
 
 ## A1. Navbar, sidebar and footer are includes, not blocks

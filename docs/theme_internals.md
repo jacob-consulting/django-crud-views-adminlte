@@ -18,6 +18,9 @@ decided it.
 
 **Consequences:**
 
+- Adopters must set `DJANGO_TABLES2_TEMPLATE = "crud_views/table/bootstrap5.html"` in their settings (tracker A19);
+  TODO Task 9: put this line in the installation page's settings block.
+
 - List tables sit on the page background, as in crud_views' Bootstrap theme, not in an AdminLTE card.
 - crud_views' wrapper `div.table-container` has no class key and is not `.table-responsive`; the theme's stylesheet
   lets it scroll sideways (`position: relative; overflow-x: auto`, tracker C9), so a wide list does not push the page

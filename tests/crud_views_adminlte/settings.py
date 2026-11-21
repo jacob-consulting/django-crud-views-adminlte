@@ -84,6 +84,8 @@ ADMINLTE = {
 CRISPY_ALLOWED_TEMPLATE_PACKS = ("bootstrap5",)
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRUD_VIEWS_EXTENDS = "crud_views_adminlte/page.html"
+# The theme replaces the host's auto-derived breadcrumb on crud_views pages, so Home comes from here (tracker A8).
+CRUD_VIEWS_BREADCRUMB_PREFIX = [{"title": "Home", "url_name": "dashboard:index"}]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_TZ = True

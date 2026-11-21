@@ -15,7 +15,6 @@ def test_system_check_clean():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(strict=True, reason="Task 3")
 def test_list_page_renders(client):
     user = get_user_model().objects.create_superuser("admin", "admin@example.com", "admin")
     client.force_login(user)

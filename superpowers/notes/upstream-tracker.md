@@ -31,7 +31,39 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
 
 ## django-crud-views (C)
 
-None logged yet.
+## C1. No items-only breadcrumb for a host-owned container
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `{% cv_breadcrumb %}` always renders its own `<nav aria-label="breadcrumb"><ol class="breadcrumb">`. A host
+  page that owns the `<ol>` and offers only a block inside it (adminlte-django's `breadcrumb` block in
+  `adminlte/page.html`) would get a `<nav><ol>` nested in its `<ol>`: invalid markup and a doubled breadcrumb style.
+  No template block, setting or class key renders the items alone (the class keys planned in #393 style the wrapper,
+  they do not remove it).
+- Minimal repro: `{% extends "adminlte/page.html" %}{% load crud_views %}{% block breadcrumb %}{% cv_breadcrumb %}{% endblock %}`
+  on a view with `CrudViewBreadcrumbMixin`.
+- Workaround: `src/crud_views_adminlte/templates/crud_views/tags/breadcrumb.html`, upstream's item loop without the
+  wrapper (shadows upstream by app order); `test_breadcrumb_copy_tracks_upstream` in
+  `tests/crud_views_adminlte/test_host_drift.py` fails when upstream edits the file.
+- Proposed upstream fix: split the template into `crud_views/tags/breadcrumb_items.html` (the `<li>` loop) and the
+  wrapper, with a `{% cv_breadcrumb_items %}` tag (as `cv_navbar_items` does for the navbar), or a block around the loop.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
+## C2. No way to hand crud_views' message rendering to a host
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: the theme leaves messages to the host's partial (one look for crud and non-crud pages, each message shown
+  once). crud_views' own message customization then does not apply on crud_views pages: the `alert:*` class keys
+  (`CRUD_VIEWS_BUTTON_CLASSES`), the `message-*` icons (`CRUD_VIEWS_ICONS`) and the `extra_tags` classes that
+  `{% cv_messages %}` appends; the close button is the host's `data-bs-dismiss` rather than crud_views'
+  `data-cv-alert-dismiss` adapter. With the stock values the output matches (same Bootstrap classes, the same `bi`
+  icons per level), so only a project that customizes them sees the difference.
+- Minimal repro: set `CRUD_VIEWS_ICONS = {"message-success": "bi:star"}`, create an object on a theme page: the
+  host's alert shows `bi-check-circle-fill`. Compare `{% cv_messages %}` with `adminlte/partials/messages.html` for a
+  message with `extra_tags` (see A9).
+- Workaround: none; `crud_views_adminlte/page.html` does not override the `messages` block.
+- Proposed upstream fix: a documented "host renders messages" mode, e.g. a public `alert_data`-style filter a host
+  partial can call per message, so a host can use crud_views' classes and icons without crud_views owning the slot.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
 ## adminlte-django (A)
 
@@ -111,3 +143,46 @@ None logged yet.
   A Bootstrap palette gap, not an upstream (crud_views / adminlte-django) defect; nothing to file.
 - Proposed upstream fix: none; kept as the theme's own helper.
 - Verified against: Bootstrap 5.3 via adminlte-django 0.3.3
+
+## A7. `page_title` is a fixed `<h3>` with no slot for icon, subtitle or actions
+
+- Status: confirmed · Severity: annoyance
+- Symptom: `adminlte/page.html` renders `<h3 class="mb-0">{% block page_title %}{% endblock %}</h3>` next to the
+  breadcrumb. A crud_views page needs a heading at its own level (`CRUD_VIEWS_HEADER_LEVEL`, h2 by default), the
+  header icon, a subtitle (`cv_paragraph`), the context action buttons and, with ViewSet Navigation, an owner header
+  with tabs above the title row; none fits in the `<h3>`.
+- Minimal repro: `{% block page_title %}<h2>…</h2><p>…</p>{% endblock %}` gives a heading inside a heading.
+- Workaround: `src/crud_views_adminlte/templates/crud_views_adminlte/page.html` overrides `content_header` (a block of
+  `adminlte/master.html`, so still extension) with the host's `app-content-header` / `container-fluid` / `row` frame
+  and re-declares `page_title` and `breadcrumb` inside it; `test_host_content_header_markup` in
+  `tests/crud_views_adminlte/test_host_drift.py` fails when the host's frame changes.
+- Proposed upstream fix: blocks around the title element and beside it in `adminlte/page.html` (`page_heading`,
+  `page_subtitle`, `page_actions`, `content_header_top`), so a child keeps the host's frame and fills the slots.
+- Verified against: adminlte-django 0.3.3
+
+## A8. The breadcrumb's Home crumb is hard-coded
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `adminlte_breadcrumb` always starts with `Home` linking to `/`, with no setting for its label or URL, and
+  the crumb list cannot be extended by a page. A crud_views page either keeps the host's auto-derived trail (path
+  segments, not the ViewSet hierarchy) or replaces it and loses that Home, so an adopter states Home a second time in
+  `CRUD_VIEWS_BREADCRUMB_PREFIX`, and the two can disagree (`/` vs. the dashboard route).
+- Minimal repro: `adminlte_breadcrumb` in `django_adminlte4/templatetags/adminlte.py`; `DEFAULTS` in
+  `django_adminlte4/conf.py` has no breadcrumb key.
+- Workaround: the theme's `breadcrumb` block renders `{% cv_breadcrumb %}` only, so Home appears once (from
+  `CRUD_VIEWS_BREADCRUMB_PREFIX`, set in `tests/crud_views_adminlte/settings.py`); `test_breadcrumb_no_duplicate_home`
+  in `tests/crud_views_adminlte/test_theme.py`.
+- Proposed upstream fix: an `ADMINLTE["breadcrumb_home"]` setting (label, route) used by `adminlte_breadcrumb`, so the
+  theme can read the same Home for crud_views' prefix.
+- Verified against: adminlte-django 0.3.3
+
+## A9. The messages partial drops `extra_tags`
+
+- Status: confirmed · Severity: cosmetic
+- Symptom: `adminlte/partials/messages.html` builds each alert's classes from the level only; a message's
+  `extra_tags` (Django's per-message classes, which `{% cv_messages %}` appends) are lost.
+- Minimal repro: render the partial with `Message(WARNING, "Careful", extra_tags="cv-sticky")`: no `cv-sticky`.
+- Workaround: none (the theme leaves the `messages` block to the host); `test_host_messages_partial_drops_extra_tags`
+  in `tests/crud_views_adminlte/test_host_drift.py` fails once the host keeps them.
+- Proposed upstream fix: append `{{ message.extra_tags }}` to the alert's class attribute.
+- Verified against: adminlte-django 0.3.3

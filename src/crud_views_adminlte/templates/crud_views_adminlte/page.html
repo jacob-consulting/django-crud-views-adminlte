@@ -1,1 +1,52 @@
-{# Placeholder so crud_views.E100 stays quiet; Task 3 replaces it with the real page extending the adminlte-django shell. #}
+{% extends "adminlte/page.html" %}
+{% load crud_views crud_views_adminlte %}
+{# Base template for every django-crud-views page (CRUD_VIEWS_EXTENDS): maps the crud_views blocks onto adminlte-django's #}
+{# page. adminlte/master.html and the host partials are not overridden. The messages block stays the host's, so crud #}
+{# and non-crud pages show alerts alike and each message once ({% cv_messages %} is not used: tracker C2, A9). #}
+{% block title %}{% cv_adminlte_title %}{% endblock %}
+{% block extra_css %}{% cv_css %}{% endblock %}
+{# tracker A7: the host's page_title block sits in a fixed <h3> next to the breadcrumb, with no slot for a header icon, #}
+{# subtitle or actions. content_header (a master.html block) is replaced with the host's own app-content-header / #}
+{# container-fluid / row frame, and the nested page_title and breadcrumb blocks are re-declared inside it. #}
+{% block content_header %}
+    <div class="app-content-header {{ adminlte.classes_content_header }}">
+        <div class="container-fluid">
+            {# ViewSet Navigation: the owner (icon, name as h1, section tabs) at the top of the header, as in #}
+            {# upstream's owner-as-page-heading recipe; the cv_navbar block holds only the tabs. #}
+            {% if cv_navbar %}
+                <div class="cv-adminlte-owner">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if cv_navbar.icon %}{% cv_icon cv_navbar.icon "fs-4" %}{% endif %}
+                        <h1 class="h3 mb-0 text-break">{{ cv_navbar.label }}</h1>
+                    </div>
+                    {% block cv_navbar %}<div class="cv-adminlte-navbar d-print-none mb-3">{% cv_navbar_items %}</div>{% endblock cv_navbar %}
+                </div>
+            {% endif %}
+            <div class="row">
+                <div class="col-sm-6">
+                    {# The page title follows CRUD_VIEWS_HEADER_LEVEL (h2 while unset) at the host's h3 size. With #}
+                    {# a bar, a heading that says the same as the active tab is left out; subtitle and actions stay. #}
+                    {% cv_adminlte_heading_repeats_tab as repeats_tab %}
+                    {% if not repeats_tab %}{% cv_heading "header" level=2 size=3 class="mb-0" %}{% block page_title %}<span class="d-inline-flex align-items-center gap-2">{% cv_header_icon %}{% cv_header %}</span>{% endblock page_title %}{% endcv_heading %}{% endif %}
+                    {% block cv_paragraph %}{% cv_paragraph as paragraph %}{% if paragraph %}<p class="text-body-secondary mt-1 mb-0">{{ paragraph }}</p>{% endif %}{% endblock cv_paragraph %}
+                </div>
+                <div class="col-sm-6">
+                    {# Items only (tracker C1); Home comes from CRUD_VIEWS_BREADCRUMB_PREFIX, not the host (tracker A8). #}
+                    <ol class="breadcrumb float-sm-end">
+                        {% block breadcrumb %}{% cv_breadcrumb %}{% endblock breadcrumb %}
+                    </ol>
+                    <div class="clearfix"></div>
+                    <div class="d-flex flex-wrap justify-content-sm-end gap-2 mt-2">
+                        {% block cv_context %}{% cv_context_actions object %}{% endblock cv_context %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content_header %}
+{% block content %}
+    {% block cv_filter %}{% endblock cv_filter %}
+    {% block cv_content %}{% endblock cv_content %}
+    {% cv_config %}
+{% endblock content %}
+{% block extra_js %}{% cv_js %}{% endblock %}

@@ -81,7 +81,7 @@ def icon_class(value: str | None) -> str | None:
         classes = template.format(name=name)
         if config.get("placement") == "host":
             classes = config.get("standalone", "{name_class}").format(name_class=classes)
-    except Exception:
+    except (KeyError, IndexError, ValueError, AttributeError):  # bad format string or non-str standalone (E354)
         return None
     return classes
 
@@ -152,4 +152,5 @@ class ViewSetGateFilter(BaseFilter):
         if user is None or not user.is_authenticated:
             return False
         view_class = entry_view_class(item)
+        # tracker C6: permission only; login-only / UserPassesTest gates of a non-PermissionRequired view are not seen
         return view_class is not None and view_class.cv_has_access(user)

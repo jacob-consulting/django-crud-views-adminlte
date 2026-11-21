@@ -112,6 +112,23 @@ Severity: **blocker**, **annoyance**, **cosmetic**.
   `CrudViewsConfig.ready()`, or `get_viewset` importing the URLconf on a miss).
 - Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
 
+## C6. No public "may this user open this view" check
+
+- Status: confirmed · Severity: annoyance
+- Symptom: navigation outside crud_views' own pages (a host sidebar) can only ask `view_class.cv_has_access(user)`,
+  which answers the permission question only. On a view without `PermissionRequired`, the base
+  `CrudView.cv_has_access` returns `True` for every user, so `LoginRequiredMixin` / `UserPassesTestMixin`
+  (`test_func`) / custom `dispatch` gates are invisible: a menu link is shown that leads to a login redirect or 403.
+- Minimal repro: `class V(LoginRequiredMixin, ListView): ...`; `V.cv_has_access(AnonymousUser())` → `True`.
+- Exact call used: `view_class.cv_has_access(user)` (obj `None`) in `ViewSetGateFilter._allowed`,
+  `src/crud_views_adminlte/menu.py`.
+- Workaround: none for those gates; current behaviour: anonymous users see no `viewset` entry at all (which covers
+  login-only views), any other non-permission gate is not reflected in the menu.
+- Proposed upstream fix: a public classmethod, e.g. `cv_can_view(user, obj=None)`, that honours every access mixin
+  of the view (login required, `test_func`, permission, ancestor policy) without a request, documented for
+  navigation code.
+- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+
 ## adminlte-django (A)
 
 ## A1. Navbar, sidebar and footer are includes, not blocks

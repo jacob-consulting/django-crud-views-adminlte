@@ -109,7 +109,7 @@ def _entry_errors(location: str, item: dict) -> list[CheckMessage]:
 def check_menu(app_configs=None, **kwargs) -> list[CheckMessage]:
     """Errors for ``viewset`` entries in ``ADMINLTE["menu"]`` that would not resolve, and for a filter pipeline that
     would ignore them (the host would render ``href="#"`` links for every user)."""
-    from django.urls import get_resolver
+    from django.urls import get_resolver, get_urlconf
     from django_adminlte4.conf import get_config
     from django_adminlte4.menu.filters import HrefFilter
 
@@ -119,7 +119,7 @@ def check_menu(app_configs=None, **kwargs) -> list[CheckMessage]:
     entries = list(_menu_entries(config.get("menu")))
     if not entries:
         return []
-    get_resolver().url_patterns  # noqa: B018 - import the URLconf, which registers the ViewSets (tracker C5)
+    get_resolver(get_urlconf()).url_patterns  # noqa: B018 - import the URLconf, which registers the ViewSets (tracker C5)
 
     errors: list[CheckMessage] = []
     filters = _filter_classes(config.get("filters"))

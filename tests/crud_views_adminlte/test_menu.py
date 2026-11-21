@@ -202,3 +202,12 @@ def test_menu_built_before_first_url_resolution():
     env = {**os.environ, "DJANGO_SETTINGS_MODULE": "tests.crud_views_adminlte.settings"}
     result = subprocess.run([sys.executable, "-c", FRESH_PROCESS], capture_output=True, text=True, env=env, check=True)
     assert "'href': '/author/'" in result.stdout
+
+
+@pytest.mark.parametrize("template", ["{nope}", "{0}", "{", "{name.nope}"])
+def test_icon_class_broken_library_gives_no_icon(template):
+    from crud_views_adminlte.menu import icon_class
+
+    with override_settings(CRUD_VIEWS_ICON_LIBRARIES={"xx": {"renderer": "font", "class": template}}):
+        assert icon_class("xx:rocket") is None
+    assert icon_class("bi:rocket") == "bi bi-rocket"

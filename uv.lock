@@ -344,7 +344,7 @@ wheels = [
 [[package]]
 name = "django-crud-views"
 version = "0.30.0"
-source = { editable = "../../django-crud-views" }
+source = { editable = "../django-crud-views" }
 dependencies = [
     { name = "crispy-bootstrap5" },
     { name = "django" },
@@ -453,9 +453,9 @@ requires-dist = [
     { name = "bump-my-version", marker = "extra == 'dev'" },
     { name = "cssselect", marker = "extra == 'test'" },
     { name = "django", specifier = ">=6.0" },
-    { name = "django-crud-views", editable = "../../django-crud-views" },
-    { name = "django-crud-views", extras = ["workflow", "polymorphic", "guardian", "ordered"], marker = "extra == 'examples'", editable = "../../django-crud-views" },
-    { name = "django-crud-views-extensions", marker = "extra == 'examples'", editable = "../../django-crud-views-extensions" },
+    { name = "django-crud-views", editable = "../django-crud-views" },
+    { name = "django-crud-views", extras = ["workflow", "polymorphic", "guardian", "ordered"], marker = "extra == 'examples'", editable = "../django-crud-views" },
+    { name = "django-crud-views-extensions", marker = "extra == 'examples'", editable = "../django-crud-views-extensions" },
     { name = "lxml", marker = "extra == 'test'" },
     { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1" },
     { name = "mkdocs-awesome-pages-plugin", marker = "extra == 'dev'", specifier = ">=2.10.1" },
@@ -477,7 +477,7 @@ provides-extras = ["examples", "test", "dev"]
 [[package]]
 name = "django-crud-views-extensions"
 version = "0.4.0"
-source = { editable = "../../django-crud-views-extensions" }
+source = { editable = "../django-crud-views-extensions" }
 dependencies = [
     { name = "django-crud-views" },
 ]

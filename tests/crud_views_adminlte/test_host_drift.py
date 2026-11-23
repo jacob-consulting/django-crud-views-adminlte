@@ -88,12 +88,13 @@ def test_breadcrumb_copy_tracks_upstream():
 
     upstream = squash(upstream_path.read_text())
     wrapped = re.fullmatch(
-        r'\{% if items %\} <nav aria-label="breadcrumb"> <ol class="breadcrumb"> (.*) </ol> </nav> \{% endif %\}',
+        r'\{% if items %\}\{% load crud_views %\} <nav aria-label="breadcrumb"> '
+        r'<ol class="\{% cv_button_class "breadcrumb" "list" %\}"> (.*) </ol> </nav> \{% endif %\}',
         upstream,
     )
     assert wrapped, f"crud_views/tags/breadcrumb.html ({CRUD_VIEWS}) changed: refresh the theme copy (tracker C1)"
     theme = squash(re.sub(r"\{#.*?#\}", "", theme_path.read_text(), flags=re.S))
-    assert theme == f"{{% if items %}} {wrapped.group(1)} {{% endif %}}"
+    assert theme == f"{{% if items %}}{{% load crud_views %}} {wrapped.group(1)} {{% endif %}}"
 
 
 def test_host_messages_partial_drops_extra_tags():

@@ -1,7 +1,7 @@
 """List tables under the theme: crud_views' table template (DJANGO_TABLES2_TEMPLATE) inside the host's page shell.
 
-The template choice and why: docs/theme_internals.md ("Tables"). The sorted-column state waits on django-crud-views
-#393 (tracker C8).
+The template choice and why: docs/theme_internals.md ("Tables"). The sorted-column state comes from django-crud-views
+#393 (tracker C8, done).
 """
 
 import lxml.html
@@ -61,8 +61,7 @@ def test_sorted_column_icon(admin_client, authors):
     assert th.cssselect("i.bi")  # crud_views' table-sort-asc icon, lost under the host's tables2 template
 
 
-# tracker C8: no table.thead copy on the fallback path; passes (and so fails strictly) once the pin brings #393
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="waiting on django-crud-views #393")
+# tracker C8, done by django-crud-views #393: aria-sort on the sorted column, with and without a table prefix
 @pytest.mark.parametrize(
     ("url_name", "param"),
     [("author-list", "sort"), ("bulk_author-list", "a-sort")],

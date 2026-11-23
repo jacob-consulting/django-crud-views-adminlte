@@ -24,6 +24,15 @@ def test_button_keys_cover_upstream():
     assert set(DEFAULT_BUTTON_CLASSES) - set(ADMINLTE_BUTTON_CLASSES) == set()
 
 
+def test_bulk_variants_follow_the_context_toolbar():
+    # django-crud-views #400 (tracker C11): the bulk toolbar is a page-level button row like the context toolbar, so
+    # each bulk variant (and its icon-only key) takes the context value.
+    for variant in ("primary", "secondary", "tertiary", "danger"):
+        for suffix in ("", ":icon"):
+            key = f"{variant}{suffix}"
+            assert ADMINLTE_BUTTON_CLASSES[f"bulk:{key}"] == ADMINLTE_BUTTON_CLASSES[f"context:{key}"], key
+
+
 def test_button_classes_registered():
     classes = get_button_classes()
     assert classes["list:primary"] == ADMINLTE_BUTTON_CLASSES["list:primary"]

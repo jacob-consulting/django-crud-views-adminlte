@@ -8,13 +8,37 @@ Rule: every override, theme CSS rule or workaround gets an entry here in the sam
 `{# tracker <ID> #}` comment at the workaround. IDs: `C<n>` for django-crud-views findings, `A<n>` for
 adminlte-django findings.
 
-Reference commits: django-crud-views `75a42851101be7db75c93e5b7de22764a3ff0949` (the nox `PIN`), adminlte-django
+Reference commits: django-crud-views `95e3fb3377788fe8a951836a9845281e81a8952d` (the nox `PIN` since 2026-11-23; was
+`75a42851`), adminlte-django
 0.3.3 (PyPI `adminlte-django`; not the unrelated `django-adminlte4`).
 
 Status: **anticipated** (found by reading the code, not yet hit), **confirmed** (the theme needed a workaround or the
 problem was reproduced), **filed** (issue number), **done** (fixed upstream and adopted here).
 
 Severity: **blocker**, **annoyance**, **cosmetic**.
+
+## Pin bump to `95e3fb33` (2026-11-23)
+
+The nox `PIN` moved from `75a42851` to django-crud-views `95e3fb33` (main after #391, #393, #394, #398, #399, #400 and
+#403). `uv lock` left the lock unchanged. `task test` (theme 86, example 277, system check) and nox
+`tests`/`examples` for 3.12/6.0 and 3.15/6.1, `package` and `docs` are green.
+
+- #393: C8 done (strict xfail removed). Upstream's breadcrumb gained class keys, so the C1 copy was refreshed to use
+  `breadcrumb:item` / `:item-active`; the theme sets the three `breadcrumb:*` keys (`breadcrumb:list` is never
+  rendered, the host owns the `<ol>`). C1 stays open.
+- #394: the compact formset headings gained `gx-3`, which broke three example assertions that matched the exact
+  attribute; they now match by class (as in the Tabler demo).
+- #399: C10 done, nothing to change. #400: C11 done and adopted (see the entry).
+- #391, #398, #403: nothing to change; adminlte-django is Bootstrap 5.3, the default prefix and namespace apply.
+- Every C entry was re-checked against the upstream diff `75a42851..95e3fb33`: no change to the files C2-C7 and C9 name,
+  so their status stands.
+- Browser pass (procedure step 4), 2026-11-23, headless Chromium 159 on the VM (Playwright; the laptop Chrome extension
+  was not connected): `/orders/` and `/orders/card/` as alex and kim, light and dark, 1280 and 375px. "Mark roasted" is
+  `btn btn-outline-secondary`, "Cancel orders" `btn btn-outline-danger` (red outline, readable in both modes once rows
+  are selected); Kim gets only "Mark roasted"; no sideways page scroll. `?sort=-state` shows the sort icon and
+  `aria-sort="descending"` on Status. The order create page's breadcrumb is one host `<ol>` with crud_views' items. The
+  manage page (`/customer/manage/`) and the order line formset follow dark mode (#394 re-check). Not clicked through:
+  the submits themselves (covered by the demo tests).
 
 ## Close-out (2026-11-21, after the browser pass)
 
@@ -36,17 +60,17 @@ Pending pin bumps (the upstream PRs are still open; follow "Pin bump procedure" 
 
 | Entry | Final status | Handled by (theme side) |
 |---|---|---|
-| C1 | confirmed | `src/crud_views_adminlte/templates/crud_views/tags/breadcrumb.html` (items only; drift-tested) |
+| C1 | confirmed | `src/crud_views_adminlte/templates/crud_views/tags/breadcrumb.html` (items only, with the #393 item keys; drift-tested) |
 | C2 | confirmed | none; `crud_views_adminlte/page.html` leaves the `messages` block to the host |
 | C3 | confirmed | check `crud_views_adminlte.E014` (`src/crud_views_adminlte/checks.py`): a `viewset` entry carries its `text` |
 | C4 | confirmed | `icon_class` in `src/crud_views_adminlte/menu.py` |
 | C5 | confirmed | URLconf import in `ViewSetHrefFilter` (`menu.py`) and `check_menu` (`checks.py`) |
 | C6 | confirmed | none; `ViewSetGateFilter` asks `cv_has_access(user)`, anonymous users see no `viewset` entry |
 | C7 | confirmed | none; pinned by `MenuPerRoleTests` in `example/config/test_pages.py` |
-| C8 | covered by #393 (CoreUI U10), open | none; `xfail(strict=True)` in `tests/crud_views_adminlte/test_tables.py` |
+| C8 | done (#393, PR #396; pin bump 2026-11-23) | none; `test_sorted_column_aria_sort` passes (xfail removed) |
 | C9 | confirmed | `.table-container` rule in `src/crud_views_adminlte/static/crud_views_adminlte/crud_views_adminlte.css` |
-| C10 | filed (#399), open | none (upstream documents it as deliberate; #399 amends that decision) |
-| C11 | filed (#400), open | none (upstream documents it as deliberate; #400 amends that decision) |
+| C10 | done (#399, PR #404; pin bump 2026-11-23) | none; the stock templates follow `view.cv_bulk_buttons` (`test_roasters_are_not_offered_cancel`) |
+| C11 | done (#400, PR #402; adopted 2026-11-23) | `bulk:*` variant keys = `context:*` values; demo "Cancel orders" is `danger` |
 | A1 | anticipated, not hit | nothing; the sidebar is fed through `ADMINLTE["menu"]`, no partial is overridden |
 | A2 | confirmed | `ViewSetHrefFilter` / `ViewSetGateFilter` (`menu.py`), check `crud_views_adminlte.E013` |
 | A3 | confirmed (demo) | `ADMINLTE` in `example/config/settings.py` and the test settings |
@@ -124,7 +148,10 @@ Open items from the browser pass that are not entries here (third party or demo-
   `tests/crud_views_adminlte/test_host_drift.py` fails when upstream edits the file.
 - Proposed upstream fix: split the template into `crud_views/tags/breadcrumb_items.html` (the `<li>` loop) and the
   wrapper, with a `{% cv_breadcrumb_items %}` tag (as `cv_navbar_items` does for the navbar), or a block around the loop.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- 2026-11-23 (pin bump to #393): upstream's file gained the `breadcrumb:list` / `:item` / `:item-active` class keys, so
+  the drift test fired. The copy now uses the item keys; the wrapper (and with it `breadcrumb:list`) stays the host's.
+  C1 is unchanged: the keys style the wrapper, they do not remove it.
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C2. No way to hand crud_views' message rendering to a host
 
@@ -141,7 +168,7 @@ Open items from the browser pass that are not entries here (third party or demo-
 - Workaround: none; `crud_views_adminlte/page.html` does not override the `messages` block.
 - Proposed upstream fix: a documented "host renders messages" mode, e.g. a public `alert_data`-style filter a host
   partial can call per message, so a host can use crud_views' classes and icons without crud_views owning the slot.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C3. No request-free label for a ViewSet
 
@@ -156,7 +183,7 @@ Open items from the browser pass that are not entries here (third party or demo-
   `src/crud_views_adminlte/checks.py` reports a missing one.
 - Proposed upstream fix: a context-free `ViewSet.get_label(plural=True)` (or `verbose_name_plural_display` property)
   that `get_meta` also uses.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C4. No icon-to-CSS-class accessor
 
@@ -172,7 +199,7 @@ Open items from the browser pass that are not entries here (third party or demo-
   change is only seen after an `ADMINLTE` change or a restart.
 - Proposed upstream fix: `crud_views.lib.icons.resolve_icon_class(value) -> str | None` for `font` libraries and raw
   classes, used by `font_renderer` itself.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C5. ViewSet lookup depends on the URLconf having been imported
 
@@ -188,7 +215,7 @@ Open items from the browser pass that are not entries here (third party or demo-
   `test_menu_built_before_first_url_resolution` in `tests/crud_views_adminlte/test_menu.py`.
 - Proposed upstream fix: a documented loading hook (autodiscover of a `viewsets` module per app in
   `CrudViewsConfig.ready()`, or `get_viewset` importing the URLconf on a miss).
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C6. No public "may this user open this view" check
 
@@ -205,7 +232,7 @@ Open items from the browser pass that are not entries here (third party or demo-
 - Proposed upstream fix: a public classmethod, e.g. `cv_can_view(user, obj=None)`, that honours every access mixin
   of the view (login required, `test_func`, permission, ancestor policy) without a request, documented for
   navigation code.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C7. A Guardian ViewSet's menu entry is shown to every signed-in user
 
@@ -219,11 +246,11 @@ Open items from the browser pass that are not entries here (third party or demo-
 - Workaround: none; the entry opens an empty list for such a user.
 - Proposed upstream fix: a "may this user see anything here" check for navigation (global permission or at least
   one object grant), next to the `cv_can_view` proposed in C6.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C8. The stock table header has no sorted-column state for assistive technology
 
-- Status: covered by #393 (CoreUI U10), open · Severity: annoyance
+- Status: done (#393, PR #396 @ `4ec93cb9`; pin bump 2026-11-23) · Severity: annoyance
 - Symptom: in `crud_views/table/bootstrap5.html` (block `table.thead`) a sorted `<th>` shows the `table-sort-asc` /
   `table-sort-desc` icon but carries no `aria-sort`, so a screen reader does not learn which column is sorted. The
   icon condition compares `request.GET.sort` with the column name, so a table with a `prefix` (parameter
@@ -235,7 +262,9 @@ Open items from the browser pass that are not entries here (third party or demo-
   and starts passing, so failing the suite, when the pin bump brings #393.
 - Proposed upstream fix: #393 (D-03): `aria-sort` and the icon from the bound column (`column.is_ordered`,
   `column.order_by_alias.is_descending`).
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949` (waiting on #393)
+- Fixed upstream: the stock header renders `aria-sort` and the sort icon from the bound column, so the prefixed table
+  works too. The strict xfail is gone; `test_sorted_column_aria_sort` passes for both cases.
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C9. The stock table wrapper is not responsive and has no class key
 
@@ -252,11 +281,11 @@ Open items from the browser pass that are not entries here (third party or demo-
   Popper's `fixed` strategy (`actions_menu_toggle.html`), so the scroller does not clip them (checked in the browser).
 - Proposed upstream fix: a `table:wrapper` class key (default `table-container table-responsive`), or
   `.table-responsive` on the stock wrapper as `view_manage.html` already does for its tables.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C10. The bulk toolbar shows every action to every viewer
 
-- Status: filed (#399) · Severity: annoyance
+- Status: done (#399, PR #404 @ `822f737c`; pin bump 2026-11-23) · Severity: annoyance
 - Symptom: the bulk toolbar renders every action in `cv_bulk_actions` whatever the viewer may do; permission is only
   checked when the form is submitted. In the demo, Kim (Roasters: `roast_order`, no `change_order`) sees
   "Cancel orders" on `/orders/`, and submitting it answers 403. Upstream documents this as deliberate
@@ -271,11 +300,14 @@ Open items from the browser pass that are not entries here (third party or demo-
   flag; one check per action, nothing per row, no Guardian object check while rendering; a source with no action
   left renders no toolbar and no checkboxes. The opt-in flag proposed here first was not selected.
 - When it lands: Kim no longer sees "Cancel orders"; `test_roasters_may_not_cancel` (direct POST, 403) keeps passing.
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Fixed upstream as proposed. The theme uses the stock table and card templates, so nothing changed here:
+  `test_roasters_are_not_offered_cancel` (list and card) pins that Kim is offered only "Mark roasted", and
+  `test_roasters_may_not_cancel` still passes.
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## C11. No danger variant for destructive bulk actions
 
-- Status: filed (#400) · Severity: cosmetic
+- Status: done (#400, PR #402 @ `71f59256`; adopted 2026-11-23) · Severity: cosmetic
 - Symptom: every bulk toolbar button is a form submit styled by `form:submit`, so a destructive action ("Cancel
   orders", upstream's own bulk Delete) looks the same as a harmless one ("Mark roasted"); both are the primary button.
   Single-record actions have variants (`list:danger`, `context:danger`), bulk actions have none. Upstream documents
@@ -289,7 +321,11 @@ Open items from the browser pass that are not entries here (third party or demo-
   The per-action class key was not selected.
 - When it lands: add the four keys (and `:icon` variants where used) to the theme's button classes and set
   `cv_action_variant = "danger"` on the demo's "Cancel orders".
-- Verified against: `75a42851101be7db75c93e5b7de22764a3ff0949`
+- Fixed upstream as proposed (an unset variant renders secondary). Adopted: `ADMINLTE_BUTTON_CLASSES` sets
+  `bulk:primary` … `bulk:danger` and their `:icon` keys to the `context:*` values
+  (`test_bulk_variants_follow_the_context_toolbar`), and the demo's "Cancel orders" is `cv_action_variant = "danger"`,
+  `btn btn-outline-danger` (`test_toolbar_buttons_follow_the_destination_variant`, list and card).
+- Verified against: `95e3fb3377788fe8a951836a9845281e81a8952d`
 
 ## adminlte-django (A)
 

@@ -89,7 +89,7 @@ class OrderFormTests(OrderTestCase):
         for url in urls:
             with self.subTest(url=url):
                 html = self.client.get(url).content.decode()
-                self.assertEqual(html.count('class="row cv-formset-compact-headings"'), 1)
+                self.assertEqual(len(re.findall(r'class="[^"]*\bcv-formset-compact-headings\b[^"]*"', html)), 1)
                 self.assertIn("cv-formset-row-compact", html)
                 # formset:legend is empty: AdminLTE styles every fieldset legend itself
                 self.assertIn('<legend class="">Line items</legend>', html)

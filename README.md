@@ -3,6 +3,7 @@
 [![Tests](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml)
 [![Lint](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml)
 [![Coverage](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte/branch/main/graph/badge.svg)](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte)
+[![Docs](https://readthedocs.org/projects/django-crud-views-adminlte/badge/?version=latest)](https://django-crud-views-adminlte.readthedocs.io/en/latest/)
 
 Current version: 0.1.0
 
@@ -42,6 +43,7 @@ Accounts: `alex`, `sam`, `kim` (password `demo`), and `admin` / `admin` (superus
 
 [`docs/`](docs/index.md): installation, menu, theme internals, demo, development (mkdocs; `uvx nox -s docs`).
 
+- Published: https://django-crud-views-adminlte.readthedocs.io/
 - Source and issues: https://github.com/jacob-consulting/django-crud-views-adminlte
 
 

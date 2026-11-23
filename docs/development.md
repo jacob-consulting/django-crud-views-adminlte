@@ -61,7 +61,7 @@ uvx nox -s docs    # the documentation, strict
 
 The matrix is Python 3.12-3.15 x Django 6.0, 6.1. Cells outside the declared support (Django 6.0 on Python 3.15;
 adminlte-django on Python 3.15) run and are logged as unsupported, never dropped. Until django-crud-views 1.0.0rc1 is
-on PyPI, nox installs it from a pinned GitHub commit (`PIN` in `noxfile.py`).
+on PyPI, nox installs it from its GitHub `main` (`CRUD_VIEWS` in `noxfile.py`), as the CoreUI and Tabler themes do.
 
 To regenerate the docs requirements after editing `docs/requirements.in`, see the command at its top.
 

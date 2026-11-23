@@ -9,12 +9,13 @@ import nox
 PYTHON_VERSIONS = ["3.12", "3.13", "3.14", "3.15"]
 DJANGO_VERSIONS = ["6.0", "6.1"]
 
-# The theme tracks django-crud-views features that are not on PyPI yet, so the matrix installs a pinned commit of its
-# GitHub repository. Bump PIN (and nothing else) to move the whole matrix. Remove the git install when
-# django-crud-views 1.0.0rc1 is released and raise the floor in pyproject.toml to >=1.0.0rc1
-# (scripts/check_release_floor.py guards the publish workflow until then).
-PIN = "95e3fb3377788fe8a951836a9845281e81a8952d"
-CRUD_VIEWS = f"django-crud-views[workflow,polymorphic,guardian,ordered] @ git+https://github.com/jacob-consulting/django-crud-views@{PIN}"
+# The theme tracks django-crud-views features that are not on PyPI yet, so the matrix installs its GitHub main, as the
+# CoreUI and Tabler themes do. Remove the git install when django-crud-views 1.0.0rc1 is released and raise the floor in
+# pyproject.toml to >=1.0.0rc1 (scripts/check_release_floor.py guards the publish workflow until then).
+CRUD_VIEWS = (
+    "django-crud-views[workflow,polymorphic,guardian,ordered]"
+    " @ git+https://github.com/jacob-consulting/django-crud-views@main"
+)
 
 
 def skip_unsupported(session, django):
@@ -52,7 +53,7 @@ SUITES = [
 @nox.session(python=PYTHON_VERSIONS, venv_backend="uv")
 @nox.parametrize("django", DJANGO_VERSIONS)
 def tests(session, django):
-    # One resolver transaction, so the pinned git django-crud-views is the one installed. --no-sources: ignore the
+    # One resolver transaction, so the git django-crud-views (main) is the one installed. --no-sources: ignore the
     # sibling checkouts of [tool.uv.sources], as CI and pip users do.
     skip_unsupported(session, django)
     session.install("--no-sources", f"django~={django}.0", CRUD_VIEWS, ".[test]")

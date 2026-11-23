@@ -1,5 +1,9 @@
 # django-crud-views-adminlte
 
+[![Tests](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml)
+[![Lint](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml)
+[![Coverage](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte/branch/main/graph/badge.svg)](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte)
+
 Current version: 0.1.0
 
 An [AdminLTE](https://adminlte.io) 4 theme for [django-crud-views](https://github.com/jacob-consulting/django-crud-views),
@@ -52,7 +56,7 @@ unset VIRTUAL_ENV
 uv sync --extra examples --extra test --extra dev
 uv run pytest -n auto tests/crud_views_adminlte --ds tests.crud_views_adminlte.settings
 uv run ruff format . && uv run ruff check .
-uvx nox   # the matrix, against the built package and the pinned django-crud-views commit
+uvx nox   # the matrix, against the built package and django-crud-views main
 ```
 
 Everything the theme needs beyond upstream hooks is listed in

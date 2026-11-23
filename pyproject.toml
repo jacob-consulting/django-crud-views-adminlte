@@ -67,7 +67,7 @@ Issues = "https://github.com/jacob-consulting/django-crud-views-adminlte/issues"
 Changelog = "https://github.com/jacob-consulting/django-crud-views-adminlte/blob/main/CHANGELOG.md"
 
 # Local development tracks the sibling checkouts (unreleased upstream features). nox, CI installs
-# django-crud-views from its GitHub (noxfile.py CRUD_VIEWS, pinned) instead until 1.0.0rc1 is on PyPI.
+# django-crud-views from its GitHub main (noxfile.py CRUD_VIEWS) instead until 1.0.0rc1 is on PyPI.
 [tool.uv.sources]
 django-crud-views = { path = "../../django-crud-views", editable = true }
 django-crud-views-extensions = { path = "../../django-crud-views-extensions", editable = true }

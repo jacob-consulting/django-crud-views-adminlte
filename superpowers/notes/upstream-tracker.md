@@ -32,8 +32,13 @@ The nox `PIN` moved from `75a42851` to django-crud-views `95e3fb33` (main after 
 - #391, #398, #403: nothing to change; adminlte-django is Bootstrap 5.3, the default prefix and namespace apply.
 - Every C entry was re-checked against the upstream diff `75a42851..95e3fb33`: no change to the files C2-C7 and C9 name,
   so their status stands.
-- Not done: the browser pass (procedure step 4), including the #394 dark-mode re-check of the manage and formset pages
-  and a look at the new bulk button colours.
+- Browser pass (procedure step 4), 2026-11-23, headless Chromium 159 on the VM (Playwright; the laptop Chrome extension
+  was not connected): `/orders/` and `/orders/card/` as alex and kim, light and dark, 1280 and 375px. "Mark roasted" is
+  `btn btn-outline-secondary`, "Cancel orders" `btn btn-outline-danger` (red outline, readable in both modes once rows
+  are selected); Kim gets only "Mark roasted"; no sideways page scroll. `?sort=-state` shows the sort icon and
+  `aria-sort="descending"` on Status. The order create page's breadcrumb is one host `<ol>` with crud_views' items. The
+  manage page (`/customer/manage/`) and the order line formset follow dark mode (#394 re-check). Not clicked through:
+  the submits themselves (covered by the demo tests).
 
 ## Close-out (2026-11-21, after the browser pass)
 

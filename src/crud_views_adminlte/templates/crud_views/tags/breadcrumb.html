@@ -1,11 +1,11 @@
-{# tracker C1: upstream crud_views/tags/breadcrumb.html without its <nav><ol class="breadcrumb"> wrapper: adminlte-django's #}
-{# page owns that <ol> and the breadcrumb block sits inside it. test_breadcrumb_copy_tracks_upstream keeps the loop equal. #}
-{% if items %}
+{# tracker C1: upstream crud_views/tags/breadcrumb.html without its <nav><ol> wrapper: adminlte-django's page owns that #}
+{# <ol> and the breadcrumb block sits inside it. test_breadcrumb_copy_tracks_upstream keeps the loop equal. #}
+{% if items %}{% load crud_views %}
     {% for item in items %}
         {% if forloop.last %}
-            <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+            <li class="{% cv_button_class "breadcrumb" "item" %} {% cv_button_class "breadcrumb" "item-active" %}" aria-current="page">{{ item.title }}</li>
         {% else %}
-            <li class="breadcrumb-item">
+            <li class="{% cv_button_class "breadcrumb" "item" %}">
                 {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
             </li>
         {% endif %}

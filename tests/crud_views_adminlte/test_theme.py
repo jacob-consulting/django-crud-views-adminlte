@@ -66,6 +66,16 @@ def test_breadcrumb_items_inside_host_ol(admin_client, author):
     assert ol.cssselect("li.breadcrumb-item.active[aria-current=page]")[-1] is ol.cssselect("li")[-1]
 
 
+def test_breadcrumb_items_follow_the_class_keys(admin_client, author, settings):
+    # django-crud-views #393: the items take breadcrumb:item / breadcrumb:item-active; the host's <ol> stays (C1)
+    settings.CRUD_VIEWS_BUTTON_CLASSES = {"breadcrumb:item": "breadcrumb-item x-item", "breadcrumb:item-active": "x-on"}
+    doc = page(admin_client.get(reverse("author-detail", kwargs={"pk": author.pk})))
+    (ol,) = doc.cssselect("ol.breadcrumb")
+    items = ol.cssselect("li")
+    assert all("x-item" in li.get("class").split() for li in items)
+    assert items[-1].get("class").split() == ["breadcrumb-item", "x-item", "x-on"]
+
+
 def test_breadcrumb_no_duplicate_home(admin_client, author):
     # CRUD_VIEWS_BREADCRUMB_PREFIX (test settings) supplies Home; the host's auto-derived Home is replaced, not added.
     for url in (reverse("author-list"), reverse("author-detail", kwargs={"pk": author.pk})):

@@ -13,7 +13,7 @@ DJANGO_VERSIONS = ["6.0", "6.1"]
 # GitHub repository. Bump PIN (and nothing else) to move the whole matrix. Remove the git install when
 # django-crud-views 1.0.0rc1 is released and raise the floor in pyproject.toml to >=1.0.0rc1
 # (scripts/check_release_floor.py guards the publish workflow until then).
-PIN = "75a42851101be7db75c93e5b7de22764a3ff0949"
+PIN = "95e3fb3377788fe8a951836a9845281e81a8952d"
 CRUD_VIEWS = f"django-crud-views[workflow,polymorphic,guardian,ordered] @ git+https://github.com/jacob-consulting/django-crud-views@{PIN}"
 
 

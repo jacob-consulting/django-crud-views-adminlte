@@ -34,7 +34,8 @@ sibling checkouts of django-crud-views that local development uses.
 | `admin` | `admin` | Superuser created by `task up`: everything, plus `/admin/` |
 
 Compare the sidebars of the accounts: it shows what each may open. Sam still sees Customers without holding a view
-permission (tracker C7), and Kim sees the bulk action "Cancel orders" she may not use (tracker C10).
+permission (tracker C7). Kim is offered only the bulk action "Mark roasted", not "Cancel orders" (tracker C10, fixed
+upstream).
 
 ## Demo data
 

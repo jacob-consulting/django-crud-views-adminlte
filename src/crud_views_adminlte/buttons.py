@@ -121,6 +121,21 @@ ADMINLTE_BUTTON_CLASSES: dict[str, str | None] = {
     "navbar:item": "nav-item mw-100",
     "navbar:link": "nav-link d-flex align-items-center mw-100 text-break gap-2",
     "navbar:link-active": "active",
+    # django-crud-views #393. The host's page owns the <ol> (tracker C1), so breadcrumb:list is never rendered; it keeps
+    # upstream's value. The items use the Bootstrap classes the host's own breadcrumb uses.
+    "breadcrumb:list": "breadcrumb",
+    "breadcrumb:item": "breadcrumb-item",
+    "breadcrumb:item-active": "active",
+    # Bulk toolbar buttons by the destination's cv_action_variant (django-crud-views #400, tracker C11): a page-level
+    # button row like the context toolbar, so the same values. Labelled by default (bulk label mode "both").
+    "bulk:primary": "btn btn-primary",
+    "bulk:secondary": "btn btn-outline-secondary",
+    "bulk:tertiary": "btn btn-outline-secondary",
+    "bulk:danger": "btn btn-outline-danger",
+    "bulk:primary:icon": "btn btn-primary px-2",
+    "bulk:secondary:icon": "btn btn-outline-secondary px-2",
+    "bulk:tertiary:icon": "btn btn-outline-secondary px-2",
+    "bulk:danger:icon": "btn btn-outline-danger px-2",
     "bulk:toolbar": "mb-3",
     "bulk:controls": "d-flex align-items-center gap-3 mb-2",
     "bulk:select-all": "form-check mb-0",

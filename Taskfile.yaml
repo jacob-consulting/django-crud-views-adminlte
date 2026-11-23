@@ -82,7 +82,7 @@ tasks:
       - "{{.MANAGE}} check --fail-level WARNING"
 
   test:matrix:
-    desc: Run the full nox matrix against the installed package (django-crud-views from the pinned GitHub commit), as CI does
+    desc: Run the full nox matrix against the installed package (django-crud-views from its GitHub main), as CI does
     cmds:
       - uvx nox {{.CLI_ARGS}}
 

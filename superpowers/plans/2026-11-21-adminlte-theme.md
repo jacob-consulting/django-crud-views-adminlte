@@ -62,6 +62,8 @@ almost everything: tooling, tests, example, tracker format), crud_views `../../d
 
 ## Pin bump procedure (used by Tasks 7, 8, 10)
 
+> Retired 2026-11-23: nox and CI test against django-crud-views `main`; there is no `PIN` to bump. Kept as history.
+
 Run when a tracked upstream change (#391, #393, #394) is merged to crud_views `main`:
 
 1. `git -C ../../django-crud-views fetch origin && git -C ../../django-crud-views merge --ff-only <commit>`; set `PIN` in

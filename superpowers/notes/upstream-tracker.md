@@ -8,8 +8,8 @@ Rule: every override, theme CSS rule or workaround gets an entry here in the sam
 `{# tracker <ID> #}` comment at the workaround. IDs: `C<n>` for django-crud-views findings, `A<n>` for
 adminlte-django findings.
 
-Reference commits: django-crud-views `95e3fb3377788fe8a951836a9845281e81a8952d` (the nox `PIN` since 2026-11-23; was
-`75a42851`), adminlte-django
+Reference commits: django-crud-views `95e3fb3377788fe8a951836a9845281e81a8952d` (last checked; since 2026-11-23 nox
+and CI test against django-crud-views `main`, no pin), adminlte-django
 0.3.3 (PyPI `adminlte-django`; not the unrelated `django-adminlte4`).
 
 Status: **anticipated** (found by reading the code, not yet hit), **confirmed** (the theme needed a workaround or the
@@ -18,6 +18,9 @@ problem was reproduced), **filed** (issue number), **done** (fixed upstream and 
 Severity: **blocker**, **annoyance**, **cosmetic**.
 
 ## Pin bump to `95e3fb33` (2026-11-23)
+
+The last pin bump: the same day the `PIN` was removed and nox and CI moved to django-crud-views `main`
+(`superpowers/specs/2026-11-23-ci-pr-checks-design.md`).
 
 The nox `PIN` moved from `75a42851` to django-crud-views `95e3fb33` (main after #391, #393, #394, #398, #399, #400 and
 #403). `uv lock` left the lock unchanged. `task test` (theme 86, example 277, system check) and nox

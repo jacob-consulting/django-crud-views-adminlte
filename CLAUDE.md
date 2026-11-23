@@ -16,7 +16,7 @@ in `docs/` (mkdocs, published later on Read the Docs).
 
 `../../django-crud-views` and `../../django-crud-views-extensions` are editable path sources (`[tool.uv.sources]`) and
 read-only for this repo: gaps are worked around here and logged in `superpowers/notes/upstream-tracker.md`. nox installs
-django-crud-views from GitHub at the commit in `PIN` (`noxfile.py`) until 1.0.0rc1 is on PyPI; the declared floor stays
+django-crud-views from its GitHub `main` (`CRUD_VIEWS` in `noxfile.py`) until 1.0.0rc1 is on PyPI; the declared floor stays
 lower and `scripts/check_release_floor.py` guards the publish step.
 
 ## Commands

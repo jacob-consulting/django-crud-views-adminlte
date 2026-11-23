@@ -14,7 +14,7 @@ runs Python 3.15 / Django 6.1.
 State: feature-complete, not released (0.1.0). Design and plan: `superpowers/specs/` and `superpowers/plans/`; user guide
 in `docs/` (mkdocs, published later on Read the Docs).
 
-`../../django-crud-views` and `../../django-crud-views-extensions` are editable path sources (`[tool.uv.sources]`) and
+`../django-crud-views` and `../django-crud-views-extensions` are editable path sources (`[tool.uv.sources]`) and
 read-only for this repo: gaps are worked around here and logged in `superpowers/notes/upstream-tracker.md`. nox installs
 django-crud-views from its GitHub `main` (`CRUD_VIEWS` in `noxfile.py`) until 1.0.0rc1 is on PyPI; the declared floor stays
 lower and `scripts/check_release_floor.py` guards the publish step.

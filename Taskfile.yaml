@@ -28,7 +28,7 @@ tasks:
       - task: seed
 
   install:
-    desc: Install the dependencies (needs the sibling checkout ../../django-crud-views)
+    desc: Install the dependencies (needs the sibling checkout ../django-crud-views)
     cmds:
       - uv sync --extra examples --extra test --extra dev
 

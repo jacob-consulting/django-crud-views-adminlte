@@ -1,5 +1,9 @@
 # django-crud-views-adminlte
 
+[![Tests](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/tests.yml)
+[![Lint](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml/badge.svg)](https://github.com/jacob-consulting/django-crud-views-adminlte/actions/workflows/lint.yml)
+[![Coverage](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte/branch/main/graph/badge.svg)](https://codecov.io/gh/jacob-consulting/django-crud-views-adminlte)
+
 Current version: 0.1.0
 
 An [AdminLTE](https://adminlte.io) 4 theme for [django-crud-views](https://github.com/jacob-consulting/django-crud-views),

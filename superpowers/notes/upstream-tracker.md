@@ -17,6 +17,18 @@ problem was reproduced), **filed** (issue number), **done** (fixed upstream and 
 
 Severity: **blocker**, **annoyance**, **cosmetic**.
 
+## 2026-11-23: CI, Codecov and Read the Docs
+
+- PR #2 (`c1cb35a`): no more `PIN`; nox and CI test against django-crud-views `main`, like the CoreUI and Tabler themes,
+  until 1.0.0rc1 is on PyPI. GitHub workflows Tests (Python 3.12-3.15 x Django 6.0/6.1, the 3.15 cells logged as
+  unsupported; coverage to Codecov), Lint and Docs, as in the Tabler theme; `CODECOV_TOKEN` secret set. Design and plan:
+  `superpowers/specs|plans/2026-11-23-ci-pr-checks*`.
+- PR #3 (`41974a2`): `.readthedocs.yaml`; the docs are live at https://django-crud-views-adminlte.readthedocs.io/ (Read
+  the Docs project connected through the Read the Docs Community GitHub App; every PR gets a preview build and check).
+  Design and plan: `superpowers/specs|plans/2026-11-23-readthedocs*`.
+- Upstream, no theme change: django-crud-views PR #406 corrects the theme guide's "Authorized data in overridden
+  templates", which still said the bulk toolbar renders destinations without access checks (stale after #399).
+
 ## Pin bump to `95e3fb33` (2026-11-23)
 
 The last pin bump: the same day the `PIN` was removed and nox and CI moved to django-crud-views `main`
